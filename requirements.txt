@@ -2,9 +2,9 @@ docplex==2.23.222
 numpy==1.23.3
 pandas==1.5.1
 matplotlib==3.6.1
-scipy==1.5.4
+# scipy==1.5.4
 setuptools==63.4.1
 black==22.8.0
 mypy==0.981
 mypy-extensions==0.4.3
-
+pytest==6.2.5
