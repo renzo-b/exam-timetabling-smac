@@ -1,13 +1,12 @@
+import random
 from typing import List
 
-import pandas as pd
 import numpy as np
-import random
+import pandas as pd
 
 
 def get_dataset(num_students):
     file = "Exam Sched Prog Datasets.xlsx"
-    #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
     enrolments = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
@@ -110,38 +109,27 @@ def get_dataset(num_students):
     sumHe_s = np.sum(course_enrollment_values, axis=1)
 
     
-    E = schdcrselist
-    S = Student_ID_List
-    T = examdate_time_list
-    R = crseinroomlist
-    He_s = course_enrollment_values
-    sumHe_s = np.sum(He_s, axis=1)
-    Cp = roomcaplist
+    exam_set = schdcrselist
+    student_set = Student_ID_List
+    datetime_slot_set = examdate_time_list
+    room_set = crseinroomlist
+    room_capacity_set = roomcaplist
+    courses_enrollments_set = course_enrollment_values
 
-
-
-
-
-
+    return (exam_set, student_set, datetime_slot_set, room_set, room_capacity_set, 
+        courses_enrollments_set)
 
 
 def get_ET_instance(instance_num : int):
-    instance = ET_Instance(
-        exam_set = ['CSC101', 'CSC102', 'CSC103', 'CSC104', 'CSC111', 'CSC110'], 
-        student_set = ['Aaron','Bruno','Cell','Dodo','Earl','Frank', 'Gary', 'Hilton', 'Ian'], 
-        datetime_slot_set = ['Dec 1st 9am', 'Dec 1st 12pm', 'Dec 2nd 9am', 'Dec 2nd 12pm', 'Dec 3rd 9am'], 
-        room_set = ['SB1', 'SB2','SB3','SB4', 'SB6','SB7'], 
-        courses_enrollments_set = np.asarray([
-            [0, 0, 1, 0, 1, 1, 0, 0, 1],
-            [1, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 0, 0, 1, 1, 1],
-            [1, 0, 1, 0, 1, 1, 0, 0, 0],
-            [0, 0, 1, 1, 0, 0, 0, 0, 1],
-            [1, 0, 0, 1, 0, 1, 0, 0, 1],
-        ]), 
-        room_capacity_set = [1, 1, 1, 1, 1, 1], 
-        ratio_inv_students = 1/3,
-    )
+
+    student_number_combinations = [500, 1000, 3000]
+    num_students = student_number_combinations[instance_num]
+    
+    (exam_set, student_set, datetime_slot_set, room_set, 
+    room_capacity_set, courses_enrollments_set) = get_dataset(num_students)
+    
+    instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set, 
+    room_capacity_set, courses_enrollments_set, 1/60)
     
     return instance
 

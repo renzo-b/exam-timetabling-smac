@@ -108,8 +108,8 @@ def parse_solutions(folder_name):
 
 
 if __name__ == "__main__":
-    num_instances = 10
-    timelimit = 120
+    num_instances = 3
+    timelimit = 86400
 
     configuration_space = [
         {"timelimit" : timelimit},
