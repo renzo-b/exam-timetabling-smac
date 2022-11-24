@@ -105,8 +105,8 @@ def get_dataset(num_students):
     #roomcaplist = temp_sch_df['Room Cap'].tolist()
     totalocclist = temp_sch_df['Total Occupancy'].tolist()
     examdate_time_list = (schedule['Examdate'].dropna().astype(str) + " : " + schedule['Begin']).dropna().tolist()
-    examdate_time_list = np.unique(examdate_time_list)
-    examdate_time_list = [i for i in examdate_time_list if i != "NaT : nan"]
+    ETL = np.unique(examdate_time_list)
+    examdate_time_list = [i for i in ETL if i != "NaT : nan"]
     course_enrollment_values = courses_enrollments_set.drop(["TEP445H1"], axis=0).values
     sumHe_s = np.sum(course_enrollment_values, axis=1)
 
