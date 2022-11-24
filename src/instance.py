@@ -48,7 +48,7 @@ def get_dataset(num_students):
     
     courses_enrollments_set = pd.pivot_table(data=final_temp, values="class", index="ACAD_ACT_CD", columns=["HASHED_PERSON_ID"], fill_value=0)
     # Cleaning Room Table
-    #Cleaning room table
+    #Cleaning room table 
 
     rooms['Room'] = rooms['Room'].astype(str)
     rooms['Room'] = rooms['Bd'].str.cat(rooms['Room'], sep = " ")
@@ -101,18 +101,25 @@ def get_dataset(num_students):
     starttimelist = temp_sch_df['Begin'].tolist()
     endtimelist = temp_sch_df['Ends'].tolist()
     enrllist = temp_sch_df['Enrolment'].tolist()
-    crseinroomlist = temp_sch_df['Course In Room'].tolist()
-    roomcaplist = temp_sch_df['Room Cap'].tolist()
+    #crseinroomlist = temp_sch_df['Course In Room'].tolist()
+    #roomcaplist = temp_sch_df['Room Cap'].tolist()
     totalocclist = temp_sch_df['Total Occupancy'].tolist()
     examdate_time_list = (temp_sch_df['Examdate'].astype(str) + " : " + temp_sch_df['Begin']).tolist()
     course_enrollment_values = courses_enrollments_set.drop(["TEP445H1"], axis=0).values
     sumHe_s = np.sum(course_enrollment_values, axis=1)
 
+    room_list = schedule['bd_room'].dropna().values
+    test_list = room_list.tolist()
+    roomlist = [i for i in test_list if i != "None"]
+    
+    room_cap_list = schedule['Room Cap'].dropna().values
+    test_cap_list = room_cap_list.tolist()
+    roomcaplist = [i for i in test_cap_list if i != "None"]
     
     exam_set = schdcrselist
     student_set = Student_ID_List
     datetime_slot_set = examdate_time_list
-    room_set = crseinroomlist
+    room_set = roomlist
     room_capacity_set = roomcaplist
     courses_enrollments_set = course_enrollment_values
 
@@ -121,6 +128,7 @@ def get_dataset(num_students):
 
 
 def get_ET_instance(instance_num : int):
+<<<<<<< Updated upstream
 
     student_number_combinations = [500, 1000, 3000]
     num_students = student_number_combinations[instance_num]
@@ -130,6 +138,24 @@ def get_ET_instance(instance_num : int):
     
     instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set, 
     room_capacity_set, courses_enrollments_set, 1/60)
+=======
+    instance = ET_Instance(
+        exam_set =  ['CSC101', 'CSC102', 'CSC103', 'CSC104', 'CSC111', 'CSC110'], 
+        student_set = ['Aaron','Bruno','Cell','Dodo','Earl','Frank', 'Gary', 'Hilton', 'Ian'], 
+        datetime_slot_set = ['Dec 1st 9am', 'Dec 1st 12pm', 'Dec 2nd 9am', 'Dec 2nd 12pm', 'Dec 3rd 9am'], 
+        room_set = ['SB1', 'SB2','SB3','SB4', 'SB6','SB7'], 
+        courses_enrollments_set = np.asarray([
+            [0, 0, 1, 0, 1, 1, 0, 0, 1],
+            [1, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0, 0, 1, 1, 1],
+            [1, 0, 1, 0, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 0, 0, 0, 0, 1],
+            [1, 0, 0, 1, 0, 1, 0, 0, 1],
+        ]), 
+        room_capacity_set = [1, 1, 1, 1, 1, 1], 
+        ratio_inv_students = 1/3,
+    )
+>>>>>>> Stashed changes
     
     return instance
 
