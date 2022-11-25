@@ -6,11 +6,11 @@ from datetime import datetime
 
 import pandas as pd
 
-from instance import get_ET_instance
+from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
 
-def generate_training_data(configuration_space, num_instances : int, parent_folder : str):
+def generate_training_data(configuration_space, parent_folder : str):
     """
     Generates a training dataset and stores the results in a folder
 
@@ -68,7 +68,7 @@ def generate_training_data(configuration_space, num_instances : int, parent_fold
     # loop through configuration space
     for i, configuration_parameters in enumerate(configuration_space):
         # solver num_instances for each configuration
-        for instance_num in range(num_instances):
+        for instance_num in range(len(INSTANCE_SPACE)):
             solver = CplexSolver()
             solver.initialize_solver(configuration_parameters)
             save_filepath = f"{path}/config_{i}/instance_{instance_num}.txt"
@@ -108,20 +108,16 @@ def parse_solutions(folder_name):
 
 
 if __name__ == "__main__":
-    num_instances = 3
     timelimit = 86400
-    threads = 0
     memory = 1
-    workmem = 8000
 
     configuration_space = [
-        {"timelimit" : timelimit, "lpmethod" : 2, "threads" : threads, "workmem" : workmem},
-        # {"timelimit" : timelimit, "lpmethod" : 1, "threads" : threads},
-        # {"timelimit" : timelimit, "lpmethod" : 2, "threads" : threads},
-        # {"timelimit" : timelimit, "lpmethod" : 3, "threads" : threads},
-        # {"timelimit" : timelimit, "lpmethod" : 4, "threads" : threads},
+        {"timelimit" : timelimit, "lpmethod" : 2},
+        {"timelimit" : timelimit, "lpmethod" : 0},
+        {"timelimit" : timelimit, "lpmethod" : 1},
     ]
+
+
     generate_training_data(
         configuration_space=configuration_space, 
-        num_instances=num_instances, 
         parent_folder="cplex_results")

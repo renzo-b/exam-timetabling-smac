@@ -20,17 +20,11 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
-        threads = configuration_parameters["threads"]
         lpmethod = configuration_parameters["lpmethod"]
-        # memory = configuration_parameters["memory"]
-        workmem = configuration_parameters["workmem"]
 
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
-        self.optimizer.parameters.threads = threads
         self.optimizer.parameters.lpmethod = lpmethod
-        # self.optimizer.parameters.memory = memory
-        self.optimizer.parameters.workmem = workmem
 
         return
 
@@ -43,26 +37,34 @@ class CplexSolver:
         R = problem_instance.room_set
         T = problem_instance.datetime_slot_set
         Cp = problem_instance.room_capacity_set
+
         He_s = problem_instance.courses_enrollments_set
         ratio_inv_students = problem_instance.ratio_inv_students
         sumHe_s = np.sum(He_s, axis=1)
 
         x = self.optimizer.binary_var_matrix(len(E), len(T), name="X_e,t") # whether we use timeslot t for exam e
         y = self.optimizer.binary_var_matrix(len(E), len(R), name="Y_e,r") # whether we use room r for exam e
+        x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name='xetr')
+
+        print("Loading c1")
         c1 = self.optimizer.add_constraints((sum(x[e, t] for t in range(len(T))) >= 1 for e in range(len(E))), names='c1') 
+        
+        print("Loading c2")
         c2 = self.optimizer.add_constraints((sum(y[e, r] for r in range(len(R))) == 1 for e in range(len(E))), names='c2') 
-        # c6 constraint 
+        
+        print("Loading c3")
+        c3 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] for e in tqdm(range(len(E))) for t in range(len(T))))
+        print("Loading c4")
+        c4 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for t in range(len(T))) == y[e,r] for e in tqdm(range(len(E))) for r in range(len(R))))
+        print("Loading c5")
+        c5 = self.optimizer.add_constraints((sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r] for r in tqdm(range(len(R))) for t in range(len(T))))  
+        
+        print("Loading c6")
         for s in tqdm(range(len(S))):
             for t in range(len(T)):
                 cond = sum(x[e,t] * He_s[e,s] for e in range(len(E)))
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
-        
-        x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name='xetr')
-        c3 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] for e in tqdm(range(len(E))) for t in range(len(T))))
-        c4 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for t in range(len(T))) == y[e,r] for e in tqdm(range(len(E))) for r in range(len(R))))
-        c5 = self.optimizer.add_constraints((sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r] for r in tqdm(range(len(R))) for t in range(len(T))))  
-        
 
         # for r in tqdm(range(len(R))):
         #             for t in range(len(T)):

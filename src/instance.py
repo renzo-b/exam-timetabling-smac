@@ -4,8 +4,14 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+### Global instance space
+INSTANCE_SPACE = [
+    {"num_students":500, "every_n_room":10,},
+    {"num_students":800, "every_n_room":10,},
+]
 
-def get_dataset(num_students):
+
+def get_dataset(num_students, every_n_room=1):
     file = "Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
@@ -26,7 +32,6 @@ def get_dataset(num_students):
         name.append(i)
 
     Student_ID_List = random.sample(name, len(name))
-    print(len(Student_ID_List))
     
     #### Unique Exams for given student
     Student_ID_Exams = []
@@ -125,19 +130,22 @@ def get_dataset(num_students):
     room_capacity_set = roomcaplist
     courses_enrollments_set = course_enrollment_values
 
+    # extract every N room to reduce the number of variables and constraints
+    room_set = room_set[::every_n_room]
+    room_capacity_set = room_capacity_set[::every_n_room]
+
     return (exam_set, student_set, datetime_slot_set, room_set, room_capacity_set, 
         courses_enrollments_set)
 
+def get_ET_instance(instance_num : int):   
 
-def get_ET_instance(instance_num : int):
+    instance_config = INSTANCE_SPACE[instance_num]
 
-    student_number_combinations = [200, 300, 400]
-    num_students = student_number_combinations[instance_num]
-    
-    print(f"Generating instance with {num_students} students")
+    # load dataset
     (exam_set, student_set, datetime_slot_set, room_set, 
-    room_capacity_set, courses_enrollments_set) = get_dataset(num_students)
+    room_capacity_set, courses_enrollments_set) = get_dataset(**instance_config)
     
+    # Create instance
     instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set, 
     room_capacity_set, courses_enrollments_set, 1/60)
     
