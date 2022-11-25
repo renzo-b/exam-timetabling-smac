@@ -73,7 +73,24 @@ class CplexSolver:
         #                     self.optimizer.add_constraint(cond <= Cp[r])
 
         # objective function
-        obj_fun =  sum(sum(y[e,r] * sumHe_s[e] for e in range(len(E))) for r in range(len(R)))
+        #obj_fun =  sum(sum(y[e,r] * sumHe_s[e] for e in range(len(E))) for r in range(len(R)))
+        ratio_of_Inv = 1/60
+        
+        up = (sum(1 * sumHe_s[e] * ratio_of_Inv for e in range(len(E))) for r in range(len(R)))
+        upper_bound=0
+        for i in up:
+            upper_bound += np.ceil(i)
+        #print(upper_bound)
+
+        ceil_obj = []
+        sum_sum = []
+
+        for r in range(len(R)):
+            ceil_obj.append(self.optimizer.integer_var(lb=0, ub= upper_bound))
+            sum_sum.append(sum(y[e,r] * sumHe_s[e] * ratio_of_Inv for e in range(len(E))))
+            self.optimizer.add_constraint(ceil_obj[r] >= sum_sum[r])
+
+        obj_fun = sum(ceil_obj[r] for r in range(len(R)))
         self.optimizer.set_objective('min', obj_fun)
         self.optimizer.print_information()
         self.optimizer.add_progress_listener(TextProgressListener())
