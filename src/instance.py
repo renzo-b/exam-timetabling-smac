@@ -123,7 +123,7 @@ def get_dataset(num_students, every_n_room=1):
     test_cap_list = room_cap_list.tolist()
     roomcaplist = [i for i in test_cap_list if i != "None"]
     
-    exam_set = schdcrselist
+    exam_set = uniq_exams
     student_set = Student_ID_List
     datetime_slot_set = examdate_time_list
     room_set = roomlist
