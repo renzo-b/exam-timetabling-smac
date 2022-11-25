@@ -20,9 +20,17 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
+        threads = configuration_parameters["threads"]
+        lpmethod = configuration_parameters["lpmethod"]
+        # memory = configuration_parameters["memory"]
+        workmem = configuration_parameters["workmem"]
 
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
+        self.optimizer.parameters.threads = threads
+        self.optimizer.parameters.lpmethod = lpmethod
+        # self.optimizer.parameters.memory = memory
+        self.optimizer.parameters.workmem = workmem
 
         return
 
@@ -43,20 +51,24 @@ class CplexSolver:
         y = self.optimizer.binary_var_matrix(len(E), len(R), name="Y_e,r") # whether we use room r for exam e
         c1 = self.optimizer.add_constraints((sum(x[e, t] for t in range(len(T))) >= 1 for e in range(len(E))), names='c1') 
         c2 = self.optimizer.add_constraints((sum(y[e, r] for r in range(len(R))) == 1 for e in range(len(E))), names='c2') 
-
-        # c3 modified constraint 
+        # c6 constraint 
         for s in tqdm(range(len(S))):
             for t in range(len(T)):
                 cond = sum(x[e,t] * He_s[e,s] for e in range(len(E)))
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
+        
+        x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name='xetr')
+        c3 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] for e in tqdm(range(len(E))) for t in range(len(T))))
+        c4 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for t in range(len(T))) == y[e,r] for e in tqdm(range(len(E))) for r in range(len(R))))
+        c5 = self.optimizer.add_constraints((sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r] for r in tqdm(range(len(R))) for t in range(len(T))))  
+        
 
-        # c4 modified constraint
-        for r in tqdm(range(len(R))):
-            for t in range(len(T)):
-                cond = sum((x[e,t]*y[e,r]) * sumHe_s[e] for e in range(len(E)))
-                if type(cond) != int:
-                    self.optimizer.add_constraint(cond <= Cp[r])
+        # for r in tqdm(range(len(R))):
+        #             for t in range(len(T)):
+        #                 cond = sum((x[e,t]*y[e,r]) * sumHe_s[e] for e in range(len(E)))
+        #                 if type(cond) != int:
+        #                     self.optimizer.add_constraint(cond <= Cp[r])
 
         # objective function
         obj_fun =  sum(sum(y[e,r] * sumHe_s[e] for e in range(len(E))) for r in range(len(R)))
@@ -64,8 +76,7 @@ class CplexSolver:
         self.optimizer.print_information()
         self.optimizer.add_progress_listener(TextProgressListener())
 
-        # solve
-        sol = self.optimizer.solve(clean_before_solve=True)
+        sol = self.optimizer.solve(log_output=True, clean_before_solve=True)
         
         # process the solution
         if sol:
@@ -96,5 +107,7 @@ class CplexSolver:
             with open(save_filepath, 'a') as f:
                 f.write(f"rt = {solve_time} \n")
                 f.write(f"obj = {objective_value} \n")
+
+        self.optimizer.clear()
 
         return

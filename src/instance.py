@@ -130,34 +130,16 @@ def get_dataset(num_students):
 
 
 def get_ET_instance(instance_num : int):
-<<<<<<< Updated upstream
 
-    student_number_combinations = [500, 1000, 3000]
+    student_number_combinations = [200, 300, 400]
     num_students = student_number_combinations[instance_num]
     
+    print(f"Generating instance with {num_students} students")
     (exam_set, student_set, datetime_slot_set, room_set, 
     room_capacity_set, courses_enrollments_set) = get_dataset(num_students)
     
     instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set, 
     room_capacity_set, courses_enrollments_set, 1/60)
-=======
-    instance = ET_Instance(
-        exam_set =  ['CSC101', 'CSC102', 'CSC103', 'CSC104', 'CSC111', 'CSC110'], 
-        student_set = ['Aaron','Bruno','Cell','Dodo','Earl','Frank', 'Gary', 'Hilton', 'Ian'], 
-        datetime_slot_set = ['Dec 1st 9am', 'Dec 1st 12pm', 'Dec 2nd 9am', 'Dec 2nd 12pm', 'Dec 3rd 9am'], 
-        room_set = ['SB1', 'SB2','SB3','SB4', 'SB6','SB7'], 
-        courses_enrollments_set = np.asarray([
-            [0, 0, 1, 0, 1, 1, 0, 0, 1],
-            [1, 0, 0, 1, 0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 0, 0, 1, 1, 1],
-            [1, 0, 1, 0, 1, 1, 0, 0, 0],
-            [0, 0, 1, 1, 0, 0, 0, 0, 1],
-            [1, 0, 0, 1, 0, 1, 0, 0, 1],
-        ]), 
-        room_capacity_set = [1, 1, 1, 1, 1, 1], 
-        ratio_inv_students = 1/3,
-    )
->>>>>>> Stashed changes
     
     return instance
 

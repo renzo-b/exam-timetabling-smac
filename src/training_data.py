@@ -110,10 +110,16 @@ def parse_solutions(folder_name):
 if __name__ == "__main__":
     num_instances = 3
     timelimit = 86400
+    threads = 0
+    memory = 1
+    workmem = 8000
 
     configuration_space = [
-        {"timelimit" : timelimit},
-        {"timelimit" : timelimit},
+        {"timelimit" : timelimit, "lpmethod" : 2, "threads" : threads, "workmem" : workmem},
+        # {"timelimit" : timelimit, "lpmethod" : 1, "threads" : threads},
+        # {"timelimit" : timelimit, "lpmethod" : 2, "threads" : threads},
+        # {"timelimit" : timelimit, "lpmethod" : 3, "threads" : threads},
+        # {"timelimit" : timelimit, "lpmethod" : 4, "threads" : threads},
     ]
     generate_training_data(
         configuration_space=configuration_space, 
