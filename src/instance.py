@@ -12,8 +12,8 @@ INSTANCE_SPACE = [
 
 
 def get_dataset(num_students, every_n_room=1):
-    #file = "Exam Sched Prog Datasets.xlsx"
-    file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
+    file = "Exam Sched Prog Datasets.xlsx"
+    #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
     enrolments = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
