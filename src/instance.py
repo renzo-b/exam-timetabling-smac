@@ -12,7 +12,8 @@ INSTANCE_SPACE = [
 
 
 def get_dataset(num_students, every_n_room=1):
-    file = "Exam Sched Prog Datasets.xlsx"
+    #file = "Exam Sched Prog Datasets.xlsx"
+    file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
     enrolments = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
@@ -112,8 +113,8 @@ def get_dataset(num_students, every_n_room=1):
     examdate_time_list = (schedule['Examdate'].dropna().astype(str) + " : " + schedule['Begin']).dropna().tolist()
     ETL = np.unique(examdate_time_list)
     examdate_time_list = [i for i in ETL if i != "NaT : nan"]
-    course_enrollment_values = courses_enrollments_set.drop(["TEP445H1"], axis=0).values
-    sumHe_s = np.sum(course_enrollment_values, axis=1)
+    course_enrollment_values = courses_enrollments_set.values #.drop(["TEP445H1"], axis=0).values
+    sumHe_s = np.sum(courses_enrollments_set, axis=1)
 
     room_list = schedule['bd_room'].dropna().values
     test_list = room_list.tolist()
