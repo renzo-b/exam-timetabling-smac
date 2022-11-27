@@ -21,10 +21,12 @@ class CplexSolver:
         """
         timelimit = configuration_parameters["timelimit"]
         lpmethod = configuration_parameters["lpmethod"]
+        bbinterval = configuration_parameters["bbinterval"]
 
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
         self.optimizer.parameters.lpmethod = lpmethod
+        self.optimizer.parameters.mip.strategy.bbinterval = bbinterval
 
         return
 
@@ -129,4 +131,4 @@ class CplexSolver:
 
         self.optimizer.clear()
 
-        return
+        return solve_time
