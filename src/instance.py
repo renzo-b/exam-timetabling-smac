@@ -6,22 +6,25 @@ import pandas as pd
 
 ### Global instance space
 INSTANCE_SPACE = [
-    {"num_students":500, "every_n_room":10, "np_seed":0, "room_avail_p":0.95, "prof_avail_p":0.95},
-    {"num_students":800, "every_n_room":10, "np_seed":1, "room_avail_p":0.95, "prof_avail_p":0.95},
+    #{"num_students":500, "every_n_room":10, "np_seed":0, "room_avail_p":0.95, "prof_avail_p":0.95},
+    #{"num_students":800, "every_n_room":10, "np_seed":1, "room_avail_p":0.95, "prof_avail_p":0.95},
+    {"num_students":5000, "every_n_room":10, "np_seed":1, "room_avail_p":0.95, "prof_avail_p":0.95},
 ]
 
 def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p):
     file = "Exam Sched Prog Datasets.xlsx"
+    #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
     enrolments = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
     schedule = pd.read_excel(file, sheet_name = "20221 Final Schedule_fromLSM")
+    his_enrolments = pd.read_excel(file, sheet_name = "hist anonymized enrolments")
     OG_Course_list = schedule.Course.dropna()
     OG_Course_list = OG_Course_list.values
     
     # Data Extraction
     #### Random sample of ID's
-    qwe = enrolments["HASHED_PERSON_ID"].values
+    qwe = his_enrolments["HASHED_PERSON_ID"].values
     qwer = np.unique(qwe)
     #random_sample_names_generator = (qwer[i] for i in range(np.random.randint(0, len(qwer)-1)))
     random_sample_names_generator = (qwer[i] for i in range(num_students))
@@ -34,16 +37,15 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p)
     
     #### Unique Exams for given student
     Student_ID_Exams = []
-    #enrolments["HASHED_PERSON_ID"].loc[ID]
     for ID in Student_ID_List:
-        Student_ID_Exams.append(enrolments["ACAD_ACT_CD"][enrolments.eq(ID).any(1)].values)
+        Student_ID_Exams.append(his_enrolments["ACAD_ACT_CD"][his_enrolments.eq(ID).any(1)].values)
     
     exam_list = []
     for exam in Student_ID_Exams:
         exam_list.append(exam.any())
     uniq_exams = np.unique(exam_list)
     
-    new_enrol = pd.DataFrame(enrolments).copy()
+    new_enrol = pd.DataFrame(his_enrolments).copy()
     new_enrol["class"] = 1
     temp_df = new_enrol[new_enrol["HASHED_PERSON_ID"].isin(Student_ID_List)]
     final_temp = temp_df[temp_df["ACAD_ACT_CD"].isin(uniq_exams)]
@@ -66,8 +68,8 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p)
     crselist = courses['COURSE_CODE'].tolist()
     sizelist = courses['CURR_REG_QTY'].tolist()
     # Enrolment data
-    idlist = enrolments['HASHED_PERSON_ID'].tolist()
-    classlist = enrolments['ACAD_ACT_CD'].tolist()
+    idlist = his_enrolments['HASHED_PERSON_ID'].tolist()
+    classlist = his_enrolments['ACAD_ACT_CD'].tolist()
 
     schedule['Room'] = schedule['Room'].astype(str)
     schedule['Examdate'] = schedule['Examdate'].astype(str)
