@@ -26,9 +26,11 @@ def minimize_mip_runtime(config, seed: int = 0):
         df.loc[i] = config_parameters
     df.to_csv(f"{path}/config_info.csv")
 
-
     mip_static_config =  {"timelimit" : 3600}
     run_times_list = []
+
+    print('Trying configuration: ')
+    print(config)
 
     for instance_num in range(len(INSTANCE_SPACE)):
         mip_solver = CplexSolver()
@@ -59,7 +61,7 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(Categorical("mip_node_selection_strategy", [0, 1, 2, 3], default=1))
     configspace.add_hyperparameter(Categorical("mip_variable_selection_strategy", [-1, 0, 1, 2, 3, 4], default=0))
     
-    scenario = Scenario(configspace, n_trials=20)
+    scenario = Scenario(configspace, n_trials=30)
 
     default_design = DefaultInitialDesign(scenario)
 
