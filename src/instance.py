@@ -6,8 +6,10 @@ import pandas as pd
 
 ### Global instance space
 INSTANCE_SPACE = [
-    {"num_students":500, "every_n_room":10, "np_seed":0, "room_avail_p":0.95, "prof_avail_p":0.95},
-    {"num_students":800, "every_n_room":10, "np_seed":1, "room_avail_p":0.95, "prof_avail_p":0.95},
+    {"num_students":np.random.randint(3000, 5500), 
+    "every_n_room":10, "np_seed": i, 
+    "room_avail_p": np.random.randint(95,100)/100, 
+    "prof_avail_p": np.random.randint(95,100)/100} for i in range(50)
 ]
 
 def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p):
@@ -140,8 +142,6 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p)
     prof_availability = np.random.choice(
         2, size=(len(exam_set), len(datetime_slot_set)), 
         p=[prof_avail_p, 1- prof_avail_p])
-
-
 
     return (exam_set, student_set, datetime_slot_set, room_set, room_capacity_set, 
         courses_enrollments_set, room_availability, prof_availability)

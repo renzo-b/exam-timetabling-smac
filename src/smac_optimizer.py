@@ -27,7 +27,7 @@ def minimize_mip_runtime(config, seed: int = 0):
     df.to_csv(f"{path}/config_info.csv")
 
 
-    mip_static_config =  {"timelimit" : 60}
+    mip_static_config =  {"timelimit" : 3600}
     run_times_list = []
 
     for instance_num in range(len(INSTANCE_SPACE)):
@@ -35,7 +35,7 @@ def minimize_mip_runtime(config, seed: int = 0):
         mip_solver.initialize_solver({**config, **mip_static_config})
         save_filepath = f"{path}/instance_{instance_num}.txt"
         instance = get_ET_instance(instance_num)
-        print(f"you're about to solve for instance num: {instance_num}")
+        print(f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
         run_time = mip_solver.solve(instance, save_filepath=save_filepath)
         run_times_list.append(run_time)
 
@@ -70,3 +70,6 @@ if __name__ == "__main__":
         logging_level=1,
         )
     best_found_config = smac.optimize()
+
+    print("BEST CONFIG:")
+    print(best_found_config)
