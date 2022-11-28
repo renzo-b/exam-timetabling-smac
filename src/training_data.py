@@ -109,7 +109,6 @@ def parse_solutions(folder_name):
 
 if __name__ == "__main__":
     timelimit = 86400
-    memory = 1
 
     configuration_space = [
         {"timelimit" : timelimit, "lpmethod" : 2},

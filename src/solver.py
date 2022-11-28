@@ -15,7 +15,6 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
-        barrier_algorithm = configuration_parameters["barrier_algorithm"]
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
@@ -33,7 +32,6 @@ class CplexSolver:
         
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
-        self.optimizer.parameters.barrier.algorithm = barrier_algorithm
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
@@ -150,7 +148,10 @@ class CplexSolver:
         # Solve
         if verbose:
             self.optimizer.add_progress_listener(TextProgressListener())
-        sol = self.optimizer.solve(log_output=True, clean_before_solve=True)
+            log_output = True
+        else:
+            log_output = False
+        sol = self.optimizer.solve(log_output=log_output, clean_before_solve=True)
         
         # process the solution
         if sol:
