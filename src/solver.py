@@ -20,13 +20,39 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
+        barrier_algorithm = configuration_parameters["barrier_algorithm"]
         lpmethod = configuration_parameters["lpmethod"]
-        bbinterval = configuration_parameters["bbinterval"]
-
+        mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
+        mip_branching_direction = configuration_parameters["mip_branching_direction"]
+        backtracking_tolerance = configuration_parameters["backtracking_tolerance"]
+        mip_cliques_switch = configuration_parameters["mip_cliques_switch"]
+        coefficient_reduction_setting = configuration_parameters["coefficient_reduction_setting"]
+        mip_covers_switch = configuration_parameters["mip_covers_switch"]
+        number_of_cutting_plane_passes = configuration_parameters["number_of_cutting_plane_passes"]
+        cut_factor_row_multiplier_limit = configuration_parameters["cut_factor_row_multiplier_limit"]
+        mip_dive_strategy = configuration_parameters["mip_dive_strategy"]
+        dual_simplex_pricing_algorithm = configuration_parameters["dual_simplex_pricing_algorithm"]
+        mip_subproblem_algorithm = configuration_parameters["mip_subproblem_algorithm"]
+        mip_node_selection_strategy = configuration_parameters["mip_node_selection_strategy"]
+        mip_variable_selection_strategy = configuration_parameters["mip_variable_selection_strategy"]
+        
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
+        self.optimizer.parameters.barrier.algorithm = barrier_algorithm
         self.optimizer.parameters.lpmethod = lpmethod
-        self.optimizer.parameters.mip.strategy.bbinterval = bbinterval
+        self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
+        self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
+        self.optimizer.parameters.mip.strategy.backtrack = backtracking_tolerance
+        self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
+        self.optimizer.parameters.preprocessing.coeffreduce = coefficient_reduction_setting
+        self.optimizer.parameters.mip.cuts.covers = mip_covers_switch
+        self.optimizer.parameters.mip.limits.cutpasses = number_of_cutting_plane_passes
+        self.optimizer.parameters.mip.limits.cutsfactor = cut_factor_row_multiplier_limit
+        self.optimizer.parameters.mip.strategy.dive = mip_dive_strategy
+        self.optimizer.parameters.simplex.dgradient	= dual_simplex_pricing_algorithm
+        self.optimizer.parameters.mip.strategy.subalgorithm	= mip_subproblem_algorithm 
+        self.optimizer.parameters.mip.strategy.nodeselect = mip_node_selection_strategy
+        self.optimizer.parameters.mip.strategy.variableselect = mip_variable_selection_strategy
 
         return
 
