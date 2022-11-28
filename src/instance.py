@@ -6,14 +6,12 @@ import pandas as pd
 
 ### Global instance space
 INSTANCE_SPACE = [
-    {"num_students":500, "every_n_room":10,},
-    {"num_students":800, "every_n_room":10,},
+    {"num_students":500, "every_n_room":10, "np_seed":0, "room_avail_p":0.95, "prof_avail_p":0.95},
+    {"num_students":800, "every_n_room":10, "np_seed":1, "room_avail_p":0.95, "prof_avail_p":0.95},
 ]
 
-
-def get_dataset(num_students, every_n_room=1):
+def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p):
     file = "Exam Sched Prog Datasets.xlsx"
-    #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
     courses = pd.read_excel(file, sheet_name = "20221 course size")
     enrolments = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
@@ -135,8 +133,18 @@ def get_dataset(num_students, every_n_room=1):
     room_set = room_set[::every_n_room]
     room_capacity_set = room_capacity_set[::every_n_room]
 
+    np.random.seed(np_seed)
+    room_availability = np.random.choice(
+        2, size=(len(room_set), len(datetime_slot_set)), 
+        p=[room_avail_p, 1- room_avail_p])
+    prof_availability = np.random.choice(
+        2, size=(len(exam_set), len(datetime_slot_set)), 
+        p=[prof_avail_p, 1- prof_avail_p])
+
+
+
     return (exam_set, student_set, datetime_slot_set, room_set, room_capacity_set, 
-        courses_enrollments_set)
+        courses_enrollments_set, room_availability, prof_availability)
 
 def get_ET_instance(instance_num : int):   
 
@@ -144,11 +152,12 @@ def get_ET_instance(instance_num : int):
 
     # load dataset
     (exam_set, student_set, datetime_slot_set, room_set, 
-    room_capacity_set, courses_enrollments_set) = get_dataset(**instance_config)
+    room_capacity_set, courses_enrollments_set, 
+    room_availability, prof_availability) = get_dataset(**instance_config)
     
     # Create instance
     instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set, 
-    room_capacity_set, courses_enrollments_set, 1/60)
+    room_capacity_set, courses_enrollments_set, 1/60, room_availability, prof_availability)
     
     return instance
 
@@ -162,7 +171,8 @@ class ET_Instance:
         room_capacity_set : List, 
         courses_enrollments_set, 
         ratio_inv_students : float,
-
+        room_availability : float,
+        prof_availability : float,
     ):
         self.exam_set = exam_set
         self.student_set = student_set
@@ -171,6 +181,8 @@ class ET_Instance:
         self.room_capacity_set = room_capacity_set
         self.courses_enrollments_set = courses_enrollments_set
         self.ratio_inv_students = ratio_inv_students
+        self.room_availability = room_availability
+        self.prof_availability = prof_availability
 
         print('generated a new IT instance')
         self.print_instance_info()

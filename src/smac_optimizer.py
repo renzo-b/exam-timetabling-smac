@@ -1,4 +1,8 @@
+import os
+from datetime import datetime
+
 import numpy as np
+import pandas as pd
 from ConfigSpace import ConfigurationSpace
 from sklearn.ensemble import RandomForestRegressor
 from smac import AlgorithmConfigurationFacade as ACFacade
@@ -10,20 +14,28 @@ from solver import CplexSolver
 
 
 def minimize_mip_runtime(config, seed: int = 0):
-    run_times_list = []
+    folder_codename = datetime.now().strftime("%y_%m_%d_%H_%M")
+    path = f"cplex_results/{folder_codename}"
+    isExist = os.path.exists(path)
+    if not isExist:
+        os.makedirs(path)
+
+    df = pd.DataFrame(columns=config.keys())
+    for i, config_parameters in enumerate([config]):
+        df.loc[i] = config_parameters
+    df.to_csv(f"{path}/config_info.csv")
+
 
     mip_static_config =  {"timelimit" : 86400}
-
-    print(config)
+    run_times_list = []
 
     for instance_num in range(len(INSTANCE_SPACE)):
         mip_solver = CplexSolver()
         mip_solver.initialize_solver({**config, **mip_static_config})
+        save_filepath = f"{path}/instance_{instance_num}.txt"
         instance = get_ET_instance(instance_num)
-        run_time = mip_solver.solve(instance)
+        run_time = mip_solver.solve(instance, save_filepath=save_filepath)
         run_times_list.append(run_time)
-
-    print(np.mean(run_times_list))
 
     return np.mean(run_times_list)
 

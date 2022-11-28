@@ -1,14 +1,9 @@
 import os
 
-import cplex
-import docplex
 import numpy as np
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
-from docplex.mp.solution import SolveSolution
 from tqdm import tqdm
-
-from instance import ET_Instance
 
 
 class CplexSolver:
@@ -56,59 +51,58 @@ class CplexSolver:
 
         return
 
-    def solve(self, problem_instance, save_filepath : str = ''):
+    def add_variables(self, E, T, R):
         """
-        Solves a problem instance
         """
-        E = problem_instance.exam_set
-        S = problem_instance.student_set
-        R = problem_instance.room_set
-        T = problem_instance.datetime_slot_set
-        Cp = problem_instance.room_capacity_set
-
-        He_s = problem_instance.courses_enrollments_set
-        ratio_inv_students = problem_instance.ratio_inv_students
-        sumHe_s = np.sum(He_s, axis=1)
-
         x = self.optimizer.binary_var_matrix(len(E), len(T), name="X_e,t") # whether we use timeslot t for exam e
         y = self.optimizer.binary_var_matrix(len(E), len(R), name="Y_e,r") # whether we use room r for exam e
         x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name='xetr')
 
-        print("Loading c1")
-        c1 = self.optimizer.add_constraints((sum(x[e, t] for t in range(len(T))) >= 1 for e in range(len(E))), names='c1') 
-        
-        print("Loading c2")
-        c2 = self.optimizer.add_constraints((sum(y[e, r] for r in range(len(R))) == 1 for e in range(len(E))), names='c2') 
-        
-        print("Loading c3")
-        c3 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] for e in tqdm(range(len(E))) for t in range(len(T))))
-        print("Loading c4")
-        c4 = self.optimizer.add_constraints((sum(x_etr[e, t, r] for t in range(len(T))) == y[e,r] for e in tqdm(range(len(E))) for r in range(len(R))))
-        print("Loading c5")
-        c5 = self.optimizer.add_constraints((sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r] for r in tqdm(range(len(R))) for t in range(len(T))))  
-        
-        print("Loading c6")
+        return x, y, x_etr
+
+    def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr):
+        print("Loading constraints")
+        self.optimizer.add_constraints(
+            (sum(x[e, t] for t in range(len(T))) >= 1 \
+                for e in range(len(E))), names='c1') 
+        self.optimizer.add_constraints(
+            (sum(y[e, r] for r in range(len(R))) == 1 \
+                for e in range(len(E))), names='c2') 
+        self.optimizer.add_constraints(
+            (sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] \
+                for e in tqdm(range(len(E))) for t in range(len(T))))
+        self.optimizer.add_constraints(
+            (sum(x_etr[e, t, r] for t in range(len(T))) == y[e,r] \
+                for e in tqdm(range(len(E))) for r in range(len(R))))
+        self.optimizer.add_constraints(
+            (sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r] \
+                for r in tqdm(range(len(R))) for t in range(len(T))))  
+        # c6
         for s in tqdm(range(len(S))):
             for t in range(len(T)):
                 cond = sum(x[e,t] * He_s[e,s] for e in range(len(E)))
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-        # for r in tqdm(range(len(R))):
-        #             for t in range(len(T)):
-        #                 cond = sum((x[e,t]*y[e,r]) * sumHe_s[e] for e in range(len(E)))
-        #                 if type(cond) != int:
-        #                     self.optimizer.add_constraint(cond <= Cp[r])
+    def add_situational_constraints(self, E, R, x, x_etr, room_availability, prof_availability):
+        for idx in np.argwhere(room_availability==1):
+            r = idx[0]
+            t = idx[1]
+            
+            self.optimizer.add_constraints((x_etr[e,t,r]==0) for e in range(len(E)))
 
-        # objective function
-        #obj_fun =  sum(sum(y[e,r] * sumHe_s[e] for e in range(len(E))) for r in range(len(R)))
-        ratio_of_Inv = 1/60
-        
+        for idx in np.argwhere(prof_availability==1):
+            e = idx[0]
+            t = idx[1]
+            
+            self.optimizer.add_constraint(x[e,t]==0)
+            self.optimizer.add_constraints((x_etr[e,t,r]==0) for r in range(len(R)))
+
+    def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv):
         up = (sum(1 * sumHe_s[e] * ratio_of_Inv for e in range(len(E))) for r in range(len(R)))
         upper_bound=0
         for i in up:
             upper_bound += np.ceil(i)
-        #print(upper_bound)
 
         ceil_obj = []
         sum_sum = []
@@ -119,10 +113,41 @@ class CplexSolver:
             self.optimizer.add_constraint(ceil_obj[r] >= sum_sum[r])
 
         obj_fun = sum(ceil_obj[r] for r in range(len(R)))
+
+        # Optimizer Info
         self.optimizer.set_objective('min', obj_fun)
         self.optimizer.print_information()
         self.optimizer.add_progress_listener(TextProgressListener())
 
+    def solve(self, problem_instance, save_filepath : str = ''):
+        """
+        Solves a problem instance
+        """
+        # Instance sets
+        E = problem_instance.exam_set
+        S = problem_instance.student_set
+        R = problem_instance.room_set
+        T = problem_instance.datetime_slot_set
+        Cp = problem_instance.room_capacity_set
+        He_s = problem_instance.courses_enrollments_set
+        ratio_of_Inv = problem_instance.ratio_inv_students
+        sumHe_s = np.sum(He_s, axis=1)
+        room_availability = problem_instance.room_availability
+        prof_availability = problem_instance.prof_availability
+
+        # Variables
+        x, y, x_etr = self.add_variables(E, T, R)
+
+        # Constraints
+        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr)
+        
+        # Optional Constraints
+        self.add_situational_constraints(E, R, x, x_etr, room_availability, prof_availability)
+        
+        # Objective Function
+        self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
+
+        # Solve
         sol = self.optimizer.solve(log_output=True, clean_before_solve=True)
         
         # process the solution
