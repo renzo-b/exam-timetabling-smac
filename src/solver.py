@@ -161,8 +161,8 @@ class CplexSolver:
             
         else:
             print("Could not find a solution")
-            solve_time = np.nan
-            objective_value = np.nan
+            solve_time = 1e6
+            objective_value = 1e6
 
         # write to file
         if len(save_filepath):

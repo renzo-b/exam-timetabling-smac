@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# smac
+smac3_output/
+smac3-*/
+
+# cplex results
+cplex_results/
