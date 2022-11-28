@@ -117,9 +117,9 @@ class CplexSolver:
         # Optimizer Info
         self.optimizer.set_objective('min', obj_fun)
         self.optimizer.print_information()
-        self.optimizer.add_progress_listener(TextProgressListener())
 
-    def solve(self, problem_instance, save_filepath : str = ''):
+
+    def solve(self, problem_instance, save_filepath : str = '', verbose=False):
         """
         Solves a problem instance
         """
@@ -148,6 +148,8 @@ class CplexSolver:
         self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
 
         # Solve
+        if verbose:
+            self.optimizer.add_progress_listener(TextProgressListener())
         sol = self.optimizer.solve(log_output=True, clean_before_solve=True)
         
         # process the solution
