@@ -15,6 +15,7 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
+        threads = configuration_parameters["threads"]
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
@@ -32,6 +33,7 @@ class CplexSolver:
         
         self.optimizer = Model(name='solver')
         self.optimizer.parameters.timelimit = timelimit
+        self.optimizer.parameters.threads = threads
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
@@ -185,4 +187,4 @@ class CplexSolver:
 
         self.optimizer.clear()
 
-        return solve_time
+        return objective_value

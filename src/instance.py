@@ -1,3 +1,4 @@
+import gc
 import random
 from typing import List
 
@@ -5,14 +6,18 @@ import numpy as np
 import pandas as pd
 
 ### Global instance space
+NUMBER_INSTANCES = 20
 INSTANCE_SPACE = [
-    {"num_students":np.random.randint(3000, 5500), 
-    "every_n_room":10, "np_seed": i, 
-    "room_avail_p": np.random.randint(95,100)/100, 
-    "prof_avail_p": np.random.randint(95,100)/100} for i in range(50)
+    {
+        "num_students": int(np.linspace(3000, 5500, NUMBER_INSTANCES)[i]), 
+        "every_n_room": 10, 
+        "np_seed": i, 
+        "room_avail_p": (np.linspace(99,95, NUMBER_INSTANCES) / 100)[i], 
+        "prof_avail_p": (np.linspace(99,95, NUMBER_INSTANCES) / 100)[i]
+    } for i in range(NUMBER_INSTANCES)
 ]
 
-def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p):
+def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p):    
     file = "Exam Sched Prog Datasets.xlsx"
     #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name = "datasets room caps ")
@@ -124,7 +129,17 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p)
     room_cap_list = schedule['Room Cap'].dropna().values
     test_cap_list = room_cap_list.tolist()
     roomcaplist = [i for i in test_cap_list if i != "None"]
-    
+
+    # free up some memory    
+    del temp_sch_df
+    del schedule
+    del new_schedule
+    del rooms
+    del courses
+    del enrolments
+    del his_enrolments
+    gc.collect()
+
     exam_set = uniq_exams
     student_set = Student_ID_List
     datetime_slot_set = examdate_time_list
@@ -148,7 +163,6 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p)
         courses_enrollments_set, room_availability, prof_availability)
 
 def get_ET_instance(instance_num : int):   
-
     instance_config = INSTANCE_SPACE[instance_num]
 
     # load dataset
