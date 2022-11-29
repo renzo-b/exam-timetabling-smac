@@ -10,13 +10,13 @@ from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
 
-def generate_training_data(configuration_space, parent_folder : str):
+def generate_training_data(configuration_space, parent_folder: str):
     """
     Generates a training dataset and stores the results in a folder
 
     Inputs
     -------
-    
+
     configuration_space : list[dict]
         list of dictionaries where each dictionary contains solver configuration 
         parameters 
@@ -111,12 +111,11 @@ if __name__ == "__main__":
     timelimit = 86400
 
     configuration_space = [
-        {"timelimit" : timelimit, "lpmethod" : 2},
-        {"timelimit" : timelimit, "lpmethod" : 0},
-        {"timelimit" : timelimit, "lpmethod" : 1},
+        {"timelimit": timelimit, "lpmethod": 2},
+        {"timelimit": timelimit, "lpmethod": 0},
+        {"timelimit": timelimit, "lpmethod": 1},
     ]
 
-
     generate_training_data(
-        configuration_space=configuration_space, 
+        configuration_space=configuration_space,
         parent_folder="cplex_results")
