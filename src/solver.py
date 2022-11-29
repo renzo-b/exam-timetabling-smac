@@ -61,10 +61,10 @@ class CplexSolver:
     def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr):
         print("Loading constraints")
         self.optimizer.add_constraints(
-            (sum(x[e, t] for t in range(len(T))) >= 1 \
+            (sum(x[e, t] for t in range(len(T))) == 1 \
                 for e in range(len(E))), names='c1') 
         self.optimizer.add_constraints(
-            (sum(y[e, r] for r in range(len(R))) == 1 \
+            (sum(y[e, r] for r in range(len(R))) >= 1 \
                 for e in range(len(E))), names='c2') 
         self.optimizer.add_constraints(
             (sum(x_etr[e, t, r] for r in range(len(R))) == x[e,t] \
