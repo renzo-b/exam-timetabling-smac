@@ -13,9 +13,12 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
+SMAC_RUN_NAME = "minimize_cost_A"
+
 
 def minimize_mip(config, seed: int = 0):
-    folder_codename = datetime.now().strftime("%y_%m_%d_%H_%M")
+    folder_codename = SMAC_RUN_NAME + '_' + \
+        datetime.now().strftime("%y_%m_%d_%H_%M")
     path = f"cplex_results/{folder_codename}"
     isExist = os.path.exists(path)
     if not isExist:
@@ -77,7 +80,7 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(Categorical(
         "mip_variable_selection_strategy", [-1, 0, 1, 2, 3, 4], default=0))
 
-    scenario = Scenario(configspace, name='cplex_min_1', n_trials=10)
+    scenario = Scenario(configspace, name=SMAC_RUN_NAME, n_trials=10)
 
     default_design = DefaultInitialDesign(scenario)
 
