@@ -29,7 +29,7 @@ INSTANCE_SPACE = [
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": "a_20189",
+        "semester_date": "a_20195",
     } for i in range(NUMBER_INSTANCES)
 ]
 
@@ -49,9 +49,6 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
 
     # initalizing
     #OG_Course_list = schedule_20221.Course.dropna().values
-
-    rooms['Room'] = rooms['Room'].astype(str)
-    rooms['Room'] = rooms['Bd'].str.cat(rooms['Room'], sep=" ")
 
     #rooms = rooms.drop(['Note','Bd'], axis=1)
 
