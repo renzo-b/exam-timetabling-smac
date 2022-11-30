@@ -1,5 +1,5 @@
 import os
-
+import pandas as pd
 import numpy as np
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
@@ -145,6 +145,66 @@ class CplexSolver:
         # Objective Function
         self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
 
+        def process_solution(sol):
+                """
+                Takes a cplex solution and produces a exam schedule
+                
+                Parameters
+                ----------
+                sol : SolveSolution
+                    solution from the solver
+                
+                Returns
+                -------
+                final_schedule : pd.DataFrame
+                    The schedule formatted in readable format for an exam organizer
+                
+                df_x : pd.DataFrame
+                    The results for variable x
+                
+                df_y : pd.DataFrame
+                    The results for variable y
+                """
+                # extract solutions as df
+                df_x = sol.get_value_df(x).rename(columns={'key_1':'exam','key_2':'timeslot'})
+                df_y = sol.get_value_df(y).rename(columns={'key_1':'exam','key_2':'room'})
+
+                # Add rows with the names of courses and timelots
+                exam_col = [E[i] for i in range(len(E)) for j in range(len(T))]
+                time_col = [T[j] for i in range(len(E)) for j in range(len(T))]
+                df_x["EXAM"] = exam_col
+                df_x["TIMESLOT"] = time_col
+
+                # Add rows with the names of courses and rooms
+                exam_col = [E[i] for i in range(len(E)) for j in range(len(R))]
+                room_col = [R[j] for i in range(len(E)) for j in range(len(R))]
+                df_y["EXAM"] = exam_col
+                df_y["ROOM"] = room_col
+                
+                # Produce the final schedule
+                final_schedule = df_x[df_x["value"]==1].merge(df_y[df_y["value"]==1], on='EXAM', how='left')
+                final_schedule = final_schedule.sort_values(by=["timeslot"], ascending=True)
+                
+                return final_schedule, df_x, df_y
+
+        def create_enrolment_df(He_s : np.array, S) -> pd.DataFrame:
+            """
+            Creates a dataframe with the students for each exam/course
+            """
+            exam_student_pairs = []
+            for exam in range(len(He_s)):
+                students_in_exam_e = []
+                for i, student in enumerate(He_s[exam]):
+                    if student == 1:
+                        students_in_exam_e.append(S[i])
+                exam_student_pairs.append(students_in_exam_e)
+                
+            enrolment_df = pd.DataFrame(columns=['EXAM','student'])
+            enrolment_df['EXAM'] = E
+            enrolment_df['student'] = exam_student_pairs
+
+            return enrolment_df
+
         # Solve
         if verbose:
             self.optimizer.add_progress_listener(TextProgressListener())
@@ -155,7 +215,10 @@ class CplexSolver:
         
         # process the solution
         if sol:
-            print("Found a solution \n")            
+            print("Found a solution \n")
+            schedule, df_x, df_y = process_solution(sol)
+            enrolment_df = create_enrolment_df(He_s, S)
+            df_schedule = (schedule.merge(enrolment_df, on='EXAM', how='left')).drop(["exam_x", "value_x","exam_y","room", "value_y"], axis=1)
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.objective_value
             
@@ -163,6 +226,7 @@ class CplexSolver:
             print("Could not find a solution")
             solve_time = 1e6
             objective_value = 1e6
+            df_schedule = pd.DataFrame({'F': ["Failed :("]})
 
         # write to file
         if len(save_filepath):
@@ -185,4 +249,4 @@ class CplexSolver:
 
         self.optimizer.clear()
 
-        return solve_time
+        return solve_time, df_schedule

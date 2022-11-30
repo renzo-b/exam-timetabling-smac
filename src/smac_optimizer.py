@@ -25,10 +25,9 @@ def minimize_mip_runtime(config, seed: int = 0):
     for i, config_parameters in enumerate([config]):
         df.loc[i] = config_parameters
     df.to_csv(f"{path}/config_info.csv")
-
+    
     mip_static_config = {"timelimit": 900}
     run_times_list = []
-
     print('Trying configuration: ')
     print(config)
 
@@ -37,11 +36,10 @@ def minimize_mip_runtime(config, seed: int = 0):
         mip_solver.initialize_solver({**config, **mip_static_config})
         save_filepath = f"{path}/instance_{instance_num}.txt"
         instance = get_ET_instance(instance_num)
-        print(
-            f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
-        run_time = mip_solver.solve(instance, save_filepath=save_filepath)
+        print(f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
+        run_time, df_schedule = mip_solver.solve(instance, save_filepath=save_filepath)
         run_times_list.append(run_time)
-
+        df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
     return np.mean(run_times_list)
 
 
@@ -76,7 +74,7 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(Categorical(
         "mip_variable_selection_strategy", [-1, 0, 1, 2, 3, 4], default=0))
 
-    scenario = Scenario(configspace, name='cplex_min_1', n_trials=20)
+    scenario = Scenario(configspace, name='cplex_min_1', n_trials=10)
 
     default_design = DefaultInitialDesign(scenario)
 
