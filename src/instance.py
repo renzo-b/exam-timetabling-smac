@@ -24,12 +24,12 @@ import pandas as pd
 NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
-        "num_students": int(np.linspace(300, 496, NUMBER_INSTANCES)[i]),
+        "num_students": int(np.linspace(1110, 900, NUMBER_INSTANCES)[i]),
         "every_n_room": 10,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": "a_20195",
+        "semester_date": "a_20225",
     } for i in range(NUMBER_INSTANCES)
 ]
 

@@ -1,6 +1,7 @@
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
 from tqdm import tqdm
@@ -58,12 +59,10 @@ class CplexSolver:
             T), name="X_e,t")  # whether we use timeslot t for exam e
         y = self.optimizer.binary_var_matrix(len(E), len(
             R), name="Y_e,r")  # whether we use room r for exam e
-        x_etr = self.optimizer.binary_var_cube(
-            len(E), len(T), len(R), name='xetr')
 
-        return x, y, x_etr
+        return x, y
 
-    def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr):
+    def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y):
         print("Loading constraints")
         self.optimizer.add_constraints(
             (sum(x[e, t] for t in range(len(T))) == 1
@@ -71,15 +70,13 @@ class CplexSolver:
         self.optimizer.add_constraints(
             (sum(y[e, r] for r in range(len(R))) >= 1
                 for e in range(len(E))), names='c2')
-        self.optimizer.add_constraints(
-            (sum(x_etr[e, t, r] for r in range(len(R))) == x[e, t]
-                for e in tqdm(range(len(E))) for t in range(len(T))))
-        self.optimizer.add_constraints(
-            (sum(x_etr[e, t, r] for t in range(len(T))) == y[e, r]
-                for e in tqdm(range(len(E))) for r in range(len(R))))
-        self.optimizer.add_constraints(
-            (sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r]
-                for r in tqdm(range(len(R))) for t in range(len(T))))
+
+        # c4 modified constraint
+        for r in range(len(R)):
+            for t in range(len(T)):
+                cond = sum((x[e,t]*y[e,r]) * sumHe_s[e] for e in range(len(E)))
+                if type(cond) != int:
+                    self.optimizer.add_constraint(cond <= Cp[r])
         # c6
         for s in tqdm(range(len(S))):
             for t in range(len(T)):
@@ -87,21 +84,21 @@ class CplexSolver:
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-    def add_situational_constraints(self, E, R, x, x_etr, room_availability, prof_availability):
-        for idx in np.argwhere(room_availability == 1):
-            r = idx[0]
-            t = idx[1]
+    # def add_situational_constraints(self, E, R, x, x_etr, room_availability, prof_availability):
+    #     for idx in np.argwhere(room_availability == 1):
+    #         r = idx[0]
+    #         t = idx[1]
 
-            self.optimizer.add_constraints(
-                (x_etr[e, t, r] == 0) for e in range(len(E)))
+    #         self.optimizer.add_constraints(
+    #             (x_etr[e, t, r] == 0) for e in range(len(E)))
 
-        for idx in np.argwhere(prof_availability == 1):
-            e = idx[0]
-            t = idx[1]
+    #     for idx in np.argwhere(prof_availability == 1):
+    #         e = idx[0]
+    #         t = idx[1]
 
-            self.optimizer.add_constraint(x[e, t] == 0)
-            self.optimizer.add_constraints(
-                (x_etr[e, t, r] == 0) for r in range(len(R)))
+    #         self.optimizer.add_constraint(x[e, t] == 0)
+    #         self.optimizer.add_constraints(
+    #             (x_etr[e, t, r] == 0) for r in range(len(R)))
 
     def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv):
         up = (sum(1 * sumHe_s[e] * ratio_of_Inv for e in range(len(E)))
@@ -142,14 +139,14 @@ class CplexSolver:
         prof_availability = problem_instance.prof_availability
 
         # Variables
-        x, y, x_etr = self.add_variables(E, T, R)
+        x, y = self.add_variables(E, T, R)
 
         # Constraints
-        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr)
+        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y)
 
         # Optional Constraints
-        self.add_situational_constraints(
-            E, R, x, x_etr, room_availability, prof_availability)
+        # self.add_situational_constraints(
+        #     E, R, x, x_etr, room_availability, prof_availability)
 
         # Objective Function
         self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
