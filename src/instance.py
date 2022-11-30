@@ -6,11 +6,25 @@ import pandas as pd
 
 # Global instance space
 # Possible Semester dates: a_20189, a_20191, a_20195, a_20199, a_20201, a_20205, a_20215, a_20219, a_20221, a_20225, a_20229, a_20231
+''' 
+{'a_len_20189': 5262,
+ 'a_len_20191': 5189,
+ 'a_len_20195': 496,
+ 'a_len_20199': 5316,
+ 'a_len_20201': 5205,
+ 'a_len_20205': 1157,
+ 'a_len_20215': 771,
+ 'a_len_20219': 5620,
+ 'a_len_20221': 5510,
+ 'a_len_20225': 1111,
+ 'a_len_20229': 5916,
+ 'a_len_20231': 5861}
+'''
 
-NUMBER_INSTANCES = 10
+NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
-        "num_students": int(np.linspace(3000, 5500, NUMBER_INSTANCES)[i]),
+        "num_students": int(np.linspace(300, 496, NUMBER_INSTANCES)[i]),
         "every_n_room": 10,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
@@ -162,7 +176,7 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
         p=[prof_avail_p, 1 - prof_avail_p])
 
     return (exam_set, student_set, datetime_slot_set, room_set, room_capacity_set,
-            courses_enrollments_set, room_availability, prof_availability)
+            courses_enrollments_set, room_availability, prof_availability, semester_date)
 
 
 def get_ET_instance(instance_num: int):
@@ -172,11 +186,11 @@ def get_ET_instance(instance_num: int):
     # load dataset
     (exam_set, student_set, datetime_slot_set, room_set,
      room_capacity_set, courses_enrollments_set,
-     room_availability, prof_availability) = get_dataset(**instance_config)
+     room_availability, prof_availability, semester_date) = get_dataset(**instance_config)
 
     # Create instance
     instance = ET_Instance(exam_set, student_set, datetime_slot_set, room_set,
-                           room_capacity_set, courses_enrollments_set, 1/60, room_availability, prof_availability)
+                           room_capacity_set, courses_enrollments_set, 1/60, room_availability, prof_availability, semester_date)
 
     return instance
 
@@ -192,6 +206,7 @@ class ET_Instance:
                  ratio_inv_students: float,
                  room_availability: float,
                  prof_availability: float,
+                 semester_date: str,
                  ):
         self.exam_set = exam_set
         self.student_set = student_set
@@ -202,14 +217,15 @@ class ET_Instance:
         self.ratio_inv_students = ratio_inv_students
         self.room_availability = room_availability
         self.prof_availability = prof_availability
+        self.semester_date = semester_date
 
         print('generated a new IT instance')
         self.print_instance_info()
 
     def print_instance_info(self):
+        print(f"Data from semester       : {self.semester_date}")
         print(f"Number of exams          : {len(self.exam_set)}")
         print(f"Number of students       : {len(self.student_set)}")
         print(f"Number of rooms          : {len(self.room_set)}")
         print(f"Number of datetime slots : {len(self.datetime_slot_set)}")
-        print(
-            f"Shape of enrollments     : {self.courses_enrollments_set.shape}")
+        print(f"Shape of enrollments     : {self.courses_enrollments_set.shape}")
