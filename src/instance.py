@@ -24,12 +24,12 @@ import pandas as pd
 NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
-        "num_students": int(np.linspace(300, 496, NUMBER_INSTANCES)[i]),
-        "every_n_room": 10,
+        "num_students": int(np.linspace(5260, 5000, NUMBER_INSTANCES)[i]),
+        "every_n_room": 1,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": "a_20195",
+        "semester_date": "a_20189",
     } for i in range(NUMBER_INSTANCES)
 ]
 
@@ -225,4 +225,5 @@ class ET_Instance:
         print(f"Number of students       : {len(self.student_set)}")
         print(f"Number of rooms          : {len(self.room_set)}")
         print(f"Number of datetime slots : {len(self.datetime_slot_set)}")
-        print(f"Shape of enrollments     : {self.courses_enrollments_set.shape}")
+        print(
+            f"Shape of enrollments     : {self.courses_enrollments_set.shape}")

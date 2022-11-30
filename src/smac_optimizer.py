@@ -13,7 +13,7 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_A"
+SMAC_RUN_NAME = "minimize_cost_C"
 
 
 def minimize_mip(config, seed: int = 0):
@@ -29,7 +29,7 @@ def minimize_mip(config, seed: int = 0):
         df.loc[i] = config_parameters
     df.to_csv(f"{path}/config_info.csv")
 
-    mip_static_config = {"timelimit": 900}
+    mip_static_config = {"timelimit": 1800}
     objective_value_list = []
     print('Trying configuration: ')
     print(config)
@@ -42,7 +42,7 @@ def minimize_mip(config, seed: int = 0):
         print(
             f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
         _, objective_value, df_schedule = mip_solver.solve(
-            instance, save_filepath=save_filepath)
+            instance, save_filepath=save_filepath, verbose=True)
         objective_value_list.append(objective_value)
         df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(Categorical(
         "mip_variable_selection_strategy", [-1, 0, 1, 2, 3, 4], default=0))
 
-    scenario = Scenario(configspace, name=SMAC_RUN_NAME, n_trials=10)
+    scenario = Scenario(configspace, name=SMAC_RUN_NAME, n_trials=30)
 
     default_design = DefaultInitialDesign(scenario)
 
