@@ -14,7 +14,7 @@ from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
 
-def minimize_mip_runtime(config, seed: int = 0):
+def minimize_mip(config, seed: int = 0):
     folder_codename = datetime.now().strftime("%y_%m_%d_%H_%M")
     path = f"cplex_results/{folder_codename}"
     isExist = os.path.exists(path)
@@ -25,9 +25,9 @@ def minimize_mip_runtime(config, seed: int = 0):
     for i, config_parameters in enumerate([config]):
         df.loc[i] = config_parameters
     df.to_csv(f"{path}/config_info.csv")
-    
+
     mip_static_config = {"timelimit": 900}
-    run_times_list = []
+    objective_value_list = []
     print('Trying configuration: ')
     print(config)
 
@@ -36,11 +36,14 @@ def minimize_mip_runtime(config, seed: int = 0):
         mip_solver.initialize_solver({**config, **mip_static_config})
         save_filepath = f"{path}/instance_{instance_num}.txt"
         instance = get_ET_instance(instance_num)
-        print(f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
-        run_time, df_schedule = mip_solver.solve(instance, save_filepath=save_filepath)
-        run_times_list.append(run_time)
+        print(
+            f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
+        _, objective_value, df_schedule = mip_solver.solve(
+            instance, save_filepath=save_filepath)
+        objective_value_list.append(objective_value)
         df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
-    return np.mean(run_times_list)
+
+    return np.mean(objective_value_list)
 
 
 if __name__ == "__main__":
@@ -80,7 +83,7 @@ if __name__ == "__main__":
 
     smac = ACFacade(
         scenario=scenario,
-        target_function=minimize_mip_runtime,
+        target_function=minimize_mip,
         initial_design=default_design,
         logging_level=1,
     )
