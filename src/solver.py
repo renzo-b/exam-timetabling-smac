@@ -1,6 +1,7 @@
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
 from tqdm import tqdm
@@ -148,8 +149,8 @@ class CplexSolver:
         self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr)
 
         # Optional Constraints
-        self.add_situational_constraints(
-            E, R, x, x_etr, room_availability, prof_availability)
+        # self.add_situational_constraints(
+        #     E, R, x, x_etr, room_availability, prof_availability)
 
         # Objective Function
         self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)

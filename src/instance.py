@@ -25,7 +25,7 @@ NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
         "num_students": int(np.linspace(5260, 5000, NUMBER_INSTANCES)[i]),
-        "every_n_room": 1,
+        "every_n_room": 2,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
