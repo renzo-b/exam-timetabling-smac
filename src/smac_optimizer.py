@@ -42,7 +42,7 @@ def minimize_mip(config, seed: int = 0):
         print(
             f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}")
         _, objective_value, df_schedule = mip_solver.solve(
-            instance, save_filepath=save_filepath)
+            instance, save_filepath=save_filepath, verbose=True)
         objective_value_list.append(objective_value)
         df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
 

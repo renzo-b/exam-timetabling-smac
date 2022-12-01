@@ -24,12 +24,12 @@ import pandas as pd
 NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
-        "num_students": int(np.linspace(300, 496, NUMBER_INSTANCES)[i]),
-        "every_n_room": 10,
+        "num_students": int(np.linspace(5500, 496, NUMBER_INSTANCES)[i]),
+        "every_n_room": 1,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": "a_20195",
+        "semester_date": "a_20221",
     } for i in range(NUMBER_INSTANCES)
 ]
 
@@ -114,6 +114,22 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
         anan_sem["a_{}".format(
             sem)] = hist_anonymized_enrolments[hist_anonymized_enrolments['SESSION_CD'] == sem]
 
+    semester_df = anan_sem["a_20221"].copy()
+
+    split = True
+
+    while split == True:
+        split = False
+        for course in semester_df.groupby("ACAD_ACT_CD").size().index:
+            course_size = semester_df.groupby("ACAD_ACT_CD").size().loc[course]
+            if course_size > max(ava_room_cap):
+                split = True
+                idx_students_in_course = semester_df[semester_df["ACAD_ACT_CD"] == course].index
+                half_students = int(len(idx_students_in_course) / 2)
+                semester_df.loc[idx_students_in_course[:half_students],"ACAD_ACT_CD"] = course + '_1'
+                semester_df.loc[idx_students_in_course[half_students:],"ACAD_ACT_CD"] = course + '_2'
+
+
     def processing_fun(semester, num_student):
         name = []
         exam_list = []
@@ -148,7 +164,7 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
 
         return uniq_exams, Student_ID_List, courses_enrollments_set
 
-    t_E, t_S, t_C = processing_fun(anan_sem[semester_date], num_students)
+    t_E, t_S, t_C = processing_fun(semester_df, num_students)
 
     #sumHe_s = np.sum(t_C.values, axis=1)
 
