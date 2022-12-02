@@ -13,12 +13,11 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_A"
-
+SMAC_RUN_NAME = "minimize_cost_H"
 
 def minimize_mip(config, seed: int = 0):
     folder_codename = SMAC_RUN_NAME + '_' + \
-        datetime.now().strftime("%y_%m_%d_%H_%M")
+        datetime.now().strftime("%y_%m_%d_%H_%M_%S_%K")
     path = f"cplex_results/{folder_codename}"
     isExist = os.path.exists(path)
     if not isExist:

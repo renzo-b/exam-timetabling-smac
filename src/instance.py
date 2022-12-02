@@ -21,62 +21,47 @@ import pandas as pd
  'a_len_20231': 5861}
 '''
 
+student_per_semester = {
+    "a_len_20189" : [4000, 5262],
+    "a_len_20191" : [4000, 5189],
+    "a_len_20195" : [300, 496],
+    "a_len_20199" : [4000, 5316],
+    "a_len_20201" : [4000, 5205],
+    "a_len_20205" : [900, 1157],
+    "a_len_20215" : [600, 771],
+    "a_len_20219" : [4000, 5620],
+    "a_len_20221" : [4000, 5510],
+    "a_len_20225" : [900, 1111],
+    "a_len_20229" : [4000, 5916],
+    "a_len_20231" : [4000, 5861],
+}
+
+SEMESTER = "a_20221"
+
 NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
     {
-        "num_students": int(np.linspace(5500, 496, NUMBER_INSTANCES)[i]),
+        "num_students": int(np.linspace(
+            student_per_semester[SEMESTER][0], 
+            student_per_semester[SEMESTER][1], 
+            NUMBER_INSTANCES)[i]),
         "every_n_room": 1,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": "a_20221",
+        "semester_date": SEMESTER,
     } for i in range(NUMBER_INSTANCES)
 ]
 
 
 def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p, semester_date):
     file = "Exam Sched Prog Datasets.xlsx"
-    #file = r"C:\Users\William Hazen\Documents\GitHub\exam-timetabling-smac\Exam Sched Prog Datasets.xlsx"
     rooms = pd.read_excel(file, sheet_name="datasets room caps ")
-    #courses_20221 = pd.read_excel(file, sheet_name = "20221 course size")
-    #enrolments_20221 = pd.read_excel(file, sheet_name = "20221 anonymized enrolments")
     schedule_20221 = pd.read_excel(
         file, sheet_name="20221 Final Schedule_fromLSM")
 
     hist_anonymized_enrolments = pd.read_excel(
         file, sheet_name="hist anonymized enrolments")
-    #hist_course_size = pd.read_excel(file, sheet_name="hist course size ")
-
-    # initalizing
-    #OG_Course_list = schedule_20221.Course.dropna().values
-
-    #rooms = rooms.drop(['Note','Bd'], axis=1)
-
-    # courses_20221['COURSE_CODE'] = courses_20221['COURSE_CODE'].str.cat(courses_20221['SECTIONCD'], sep = "")
-    # courses_20221 = courses_20221.drop(['SESSION_CD','SECTIONCD','ADMINFACULTYCODE','ADMINDEPT'], axis=1)
-    # crselist = courses_20221['COURSE_CODE'].tolist()
-    # sizelist = courses_20221['CURR_REG_QTY'].tolist()
-    # # Enrolment data
-    # idlist = enrolments_20221['HASHED_PERSON_ID'].tolist()
-    # classlist = enrolments_20221['ACAD_ACT_CD'].tolist()
-
-    # schedule_20221['Room'] = schedule_20221['Room'].astype(str)
-    # schedule_20221['Examdate'] = schedule_20221['Examdate'].astype(str)
-    # schedule_20221['Begin'] = schedule_20221['Begin'].astype(str)
-    # schedule_20221['Ends'] = schedule_20221['Ends'].astype(str)
-
-    # schedule_20221['Room'] = schedule_20221['Bd'].str.cat(schedule_20221['Room'], sep = " ")
-
-    # schedule_20221 = schedule_20221.drop(['Bd','Faculty','Department','Section','Sesson','Course Name','Duration'], axis=1)
-
-    # schedule_20221.replace('ZZ REFER_TO_FACULTY_SCHEDULE', 'None', inplace=True)
-    # schedule_20221.replace('ZZ REFER_TO_FACULTY_SCHEDULE', 'None', inplace=True)
-    # schedule_20221.replace('ZZ ONLIN', 'None', inplace=True)
-    # schedule_20221.replace('APSCDept APSCDept', 'None', inplace=True)
-    # schedule_20221.replace('APSCDept ComputerLab', 'None', inplace=True)
-    # schedule_20221.replace('ZZ KNOX', 'None', inplace=True)
-    # schedule_20221.replace('ZZ VLAD', 'None', inplace=True)
-    # schedule_20221.replace('ZZ ONLINMUSIC', 'None', inplace=True)
 
     schedule_20221['Examdate'] = schedule_20221['Examdate'].astype(str)
     schedule_20221['Begin'] = schedule_20221['Begin'].astype(str)
@@ -85,17 +70,6 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
 
     ETL = np.unique(examdate_time_list)
     examdate_time_list = [i for i in ETL if i != "NaT : nan"]
-
-    # course_enrollment_values = courses_enrollments_set.values #.drop(["TEP445H1"], axis=0).values
-    # sumHe_s = np.sum(courses_enrollments_set, axis=1)
-
-    # room_list = schedule_20221['bd_room'].dropna().values
-    # test_list = room_list.tolist()
-    # roomlist = [i for i in test_list if i != "None"]
-
-    # room_cap_list = schedule_20221['Room Cap'].dropna().values
-    # test_cap_list = room_cap_list.tolist()
-    # roomcaplist = [i for i in test_cap_list if i != "None"]
 
     # new processing
     rooms['Room'] = rooms['Room'].astype(str)
@@ -114,7 +88,7 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
         anan_sem["a_{}".format(
             sem)] = hist_anonymized_enrolments[hist_anonymized_enrolments['SESSION_CD'] == sem]
 
-    semester_df = anan_sem["a_20221"].copy()
+    semester_df = anan_sem[semester_date]
 
     split = True
 
@@ -166,12 +140,10 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
 
     t_E, t_S, t_C = processing_fun(semester_df, num_students)
 
-    #sumHe_s = np.sum(t_C.values, axis=1)
-
-# storing
+    # storing
     exam_set = t_E
     student_set = t_S
-    datetime_slot_set = examdate_time_list
+    datetime_slot_set = list(range(32)) #examdate_time_list
     room_set = ava_rooms
     room_capacity_set = ava_room_cap
     courses_enrollments_set = t_C.values
@@ -180,6 +152,7 @@ def get_dataset(num_students, every_n_room, np_seed, room_avail_p, prof_avail_p,
     room_set = room_set[::every_n_room]
     room_capacity_set = room_capacity_set[::every_n_room]
 
+    # make some rooms unavailable with some probability
     np.random.seed(np_seed)
     room_availability = np.random.choice(
         2, size=(len(room_set), len(datetime_slot_set)),

@@ -1,6 +1,8 @@
 import os
-import pandas as pd
+from math import ceil, floor
+
 import numpy as np
+import pandas as pd
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
 from tqdm import tqdm
@@ -51,7 +53,7 @@ class CplexSolver:
 
         return
 
-    def add_variables(self, E, T, R):
+    def add_variables(self, E, T, R, S):
         """
         """
         x = self.optimizer.binary_var_matrix(len(E), len(
@@ -61,9 +63,12 @@ class CplexSolver:
         x_etr = self.optimizer.binary_var_cube(
             len(E), len(T), len(R), name='xetr')
 
-        return x, y, x_etr
+        x_st = self.optimizer.binary_var_matrix(len(S), len(
+            T), name="x_st")  # whether student s in sitting in an exam at time T
 
-    def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr):
+        return x, y, x_etr, x_st
+
+    def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st):
         print("Loading constraints")
         self.optimizer.add_constraints(
             (sum(x[e, t] for t in range(len(T))) == 1
@@ -84,8 +89,31 @@ class CplexSolver:
         for s in tqdm(range(len(S))):
             for t in range(len(T)):
                 cond = sum(x[e, t] * He_s[e, s] for e in range(len(E)))
+
+                self.optimizer.add_constraint(cond == x_st[s, t])
+
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
+
+        # # C7 connect x_st variable to other variables
+        # for e in tqdm(range(len(E))):
+        #     for t in range(len(T)):
+        #         for s in range(len(S)):
+        #             self.optimizer.add_constraint(x_st[s,t] == (x[e, t] * He_s[e, s]))
+        
+        # C8 only one exam per day for each student
+        for s in range(len(S)):
+            k = 0
+            for i in range(ceil(len(T) / 3)):
+                if i == ceil(len(T) / 3) - 1:
+                    sum_xt = 0
+                    for j in range(len(T) % 3):
+                        sum_xt += x_st[s, k + j]
+                    self.optimizer.add_constraint(sum_xt <= 1)
+                else:
+                    self.optimizer.add_constraint((x_st[s, k] + x_st[s, k+1] + x_st[s, k+2]) <= 1)
+                k += 3
+
 
     def add_situational_constraints(self, E, R, x, x_etr, room_availability, prof_availability):
         for idx in np.argwhere(room_availability == 1):
@@ -142,10 +170,10 @@ class CplexSolver:
         prof_availability = problem_instance.prof_availability
 
         # Variables
-        x, y, x_etr = self.add_variables(E, T, R)
+        x, y, x_etr, x_st = self.add_variables(E, T, R, S)
 
         # Constraints
-        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr)
+        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st)
 
         # Optional Constraints
         self.add_situational_constraints(
@@ -153,70 +181,6 @@ class CplexSolver:
 
         # Objective Function
         self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
-
-        def process_solution(sol):
-            """
-            Takes a cplex solution and produces a exam schedule
-
-            Parameters
-            ----------
-            sol : SolveSolution
-                solution from the solver
-
-            Returns
-            -------
-            final_schedule : pd.DataFrame
-                The schedule formatted in readable format for an exam organizer
-
-            df_x : pd.DataFrame
-                The results for variable x
-
-            df_y : pd.DataFrame
-                The results for variable y
-            """
-            # extract solutions as df
-            df_x = sol.get_value_df(x).rename(
-                columns={'key_1': 'exam', 'key_2': 'timeslot'})
-            df_y = sol.get_value_df(y).rename(
-                columns={'key_1': 'exam', 'key_2': 'room'})
-
-            # Add rows with the names of courses and timelots
-            exam_col = [E[i] for i in range(len(E)) for j in range(len(T))]
-            time_col = [T[j] for i in range(len(E)) for j in range(len(T))]
-            df_x["EXAM"] = exam_col
-            df_x["TIMESLOT"] = time_col
-
-            # Add rows with the names of courses and rooms
-            exam_col = [E[i] for i in range(len(E)) for j in range(len(R))]
-            room_col = [R[j] for i in range(len(E)) for j in range(len(R))]
-            df_y["EXAM"] = exam_col
-            df_y["ROOM"] = room_col
-
-            # Produce the final schedule
-            final_schedule = df_x[df_x["value"] == 1].merge(
-                df_y[df_y["value"] == 1], on='EXAM', how='left')
-            final_schedule = final_schedule.sort_values(
-                by=["timeslot"], ascending=True)
-
-            return final_schedule, df_x, df_y
-
-        def create_enrolment_df(He_s: np.array, S) -> pd.DataFrame:
-            """
-            Creates a dataframe with the students for each exam/course
-            """
-            exam_student_pairs = []
-            for exam in range(len(He_s)):
-                students_in_exam_e = []
-                for i, student in enumerate(He_s[exam]):
-                    if student == 1:
-                        students_in_exam_e.append(S[i])
-                exam_student_pairs.append(students_in_exam_e)
-
-            enrolment_df = pd.DataFrame(columns=['EXAM', 'student'])
-            enrolment_df['EXAM'] = E
-            enrolment_df['student'] = exam_student_pairs
-
-            return enrolment_df
 
         # Solve
         if verbose:
@@ -230,7 +194,7 @@ class CplexSolver:
         # process the solution
         if sol:
             print("Found a solution \n")
-            schedule, df_x, df_y = process_solution(sol)
+            schedule, df_x, df_y = self.optimizer.process_solution(sol)
             enrolment_df = create_enrolment_df(He_s, S)
             df_schedule = (schedule.merge(enrolment_df, on='EXAM', how='left')).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1)
@@ -265,3 +229,68 @@ class CplexSolver:
         self.optimizer.clear()
 
         return solve_time, objective_value, df_schedule
+
+
+    def process_solution(self, sol):
+        """
+        Takes a cplex solution and produces a exam schedule
+
+        Parameters
+        ----------
+        sol : SolveSolution
+            solution from the solver
+
+        Returns
+        -------
+        final_schedule : pd.DataFrame
+            The schedule formatted in readable format for an exam organizer
+
+        df_x : pd.DataFrame
+            The results for variable x
+
+        df_y : pd.DataFrame
+            The results for variable y
+        """
+        # extract solutions as df
+        df_x = sol.get_value_df(x).rename(
+            columns={'key_1': 'exam', 'key_2': 'timeslot'})
+        df_y = sol.get_value_df(y).rename(
+            columns={'key_1': 'exam', 'key_2': 'room'})
+
+        # Add rows with the names of courses and timelots
+        exam_col = [E[i] for i in range(len(E)) for j in range(len(T))]
+        time_col = [T[j] for i in range(len(E)) for j in range(len(T))]
+        df_x["EXAM"] = exam_col
+        df_x["TIMESLOT"] = time_col
+
+        # Add rows with the names of courses and rooms
+        exam_col = [E[i] for i in range(len(E)) for j in range(len(R))]
+        room_col = [R[j] for i in range(len(E)) for j in range(len(R))]
+        df_y["EXAM"] = exam_col
+        df_y["ROOM"] = room_col
+
+        # Produce the final schedule
+        final_schedule = df_x[df_x["value"] == 1].merge(
+            df_y[df_y["value"] == 1], on='EXAM', how='left')
+        final_schedule = final_schedule.sort_values(
+            by=["timeslot"], ascending=True)
+
+        return final_schedule, df_x, df_y
+
+def create_enrolment_df(He_s: np.array, S) -> pd.DataFrame:
+    """
+    Creates a dataframe with the students for each exam/course
+    """
+    exam_student_pairs = []
+    for exam in range(len(He_s)):
+        students_in_exam_e = []
+        for i, student in enumerate(He_s[exam]):
+            if student == 1:
+                students_in_exam_e.append(S[i])
+        exam_student_pairs.append(students_in_exam_e)
+
+    enrolment_df = pd.DataFrame(columns=['EXAM', 'student'])
+    enrolment_df['EXAM'] = E
+    enrolment_df['student'] = exam_student_pairs
+
+    return enrolment_df
