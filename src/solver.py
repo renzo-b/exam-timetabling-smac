@@ -77,7 +77,8 @@ class CplexSolver:
         y = self.optimizer.binary_var_matrix(
             len(E), len(R), name="Y_e,r"
         )  # whether we use room r for exam e
-        x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name="xetr")
+        x_etr = self.optimizer.binary_var_cube(
+            len(E), len(T), len(R), name="xetr")
 
         x_st = self.optimizer.binary_var_matrix(
             len(S), len(T), name="x_st"
@@ -111,7 +112,8 @@ class CplexSolver:
         )
         self.optimizer.add_constraints(
             (
-                sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r]
+                sum(x_etr[e, t, r] * sumHe_s[e]
+                    for e in range(len(E))) <= Cp[r]
                 for r in tqdm(range(len(R)))
                 for t in range(len(T))
             )
@@ -148,14 +150,16 @@ class CplexSolver:
             r = idx[0]
             t = idx[1]
 
-            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for e in range(len(E)))
+            self.optimizer.add_constraints(
+                (x_etr[e, t, r] == 0) for e in range(len(E)))
 
         for idx in np.argwhere(prof_availability == 1):
             e = idx[0]
             t = idx[1]
 
             self.optimizer.add_constraint(x[e, t] == 0)
-            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for r in range(len(R)))
+            self.optimizer.add_constraints(
+                (x_etr[e, t, r] == 0) for r in range(len(R)))
 
     def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv):
         up = (
@@ -218,9 +222,11 @@ class CplexSolver:
             log_output = True
         else:
             log_output = False
-        sol = self.optimizer.solve(log_output=log_output, clean_before_solve=True)
+        sol = self.optimizer.solve(
+            log_output=log_output, clean_before_solve=True)
 
-        print(self.optimizer.solve_details.status)
+        print(self.optimizer.solve_details.status, ' status code: ',
+              self.optimizer.solve_details.status_code)
 
         # process the solution
         if self.optimizer.solve_details.status_code == 101:  # success
@@ -236,10 +242,10 @@ class CplexSolver:
         elif self.optimizer.solve_details.status_code == 108:  # time limit
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
             solve_time = self.optimizer.solve_details.time
-            objective_value = 1e6
+            objective_value = self.optimizer.solve_details.best_bound
             status = "timeout"
 
-        elif self.optimizer.solve_details.status_code == 103:  # time limit
+        elif self.optimizer.solve_details.status_code == 103:  # infeasible problem
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
             solve_time = self.optimizer.solve_details.time
             objective_value = 0
@@ -300,7 +306,8 @@ class CplexSolver:
         df_x = sol.get_value_df(x).rename(
             columns={"key_1": "exam", "key_2": "timeslot"}
         )
-        df_y = sol.get_value_df(y).rename(columns={"key_1": "exam", "key_2": "room"})
+        df_y = sol.get_value_df(y).rename(
+            columns={"key_1": "exam", "key_2": "room"})
 
         # Add rows with the names of courses and timelots
         exam_col = [E[i] for i in range(len(E)) for j in range(len(T))]
@@ -318,7 +325,8 @@ class CplexSolver:
         final_schedule = df_x[df_x["value"] == 1].merge(
             df_y[df_y["value"] == 1], on="EXAM", how="left"
         )
-        final_schedule = final_schedule.sort_values(by=["timeslot"], ascending=True)
+        final_schedule = final_schedule.sort_values(
+            by=["timeslot"], ascending=True)
 
         return final_schedule, df_x, df_y
 
