@@ -194,8 +194,8 @@ class CplexSolver:
         # process the solution
         if sol:
             print("Found a solution \n")
-            schedule, df_x, df_y = self.optimizer.process_solution(sol)
-            enrolment_df = create_enrolment_df(He_s, S)
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on='EXAM', how='left')).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1)
             solve_time = self.optimizer.solve_details.time
@@ -231,7 +231,7 @@ class CplexSolver:
         return solve_time, objective_value, df_schedule
 
 
-    def process_solution(self, sol):
+    def process_solution(self, sol, x, y, E, T, R):
         """
         Takes a cplex solution and produces a exam schedule
 
@@ -277,7 +277,7 @@ class CplexSolver:
 
         return final_schedule, df_x, df_y
 
-def create_enrolment_df(He_s: np.array, S) -> pd.DataFrame:
+def create_enrolment_df(He_s: np.array, S, E) -> pd.DataFrame:
     """
     Creates a dataframe with the students for each exam/course
     """
