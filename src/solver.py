@@ -226,9 +226,10 @@ class CplexSolver:
             log_output = False
         sol = self.optimizer.solve(log_output=log_output, clean_before_solve=True)
 
+        print(self.optimizer.solve_details.status)
+
         # process the solution
-        if sol:
-            print("Found a solution \n")
+        if self.optimizer.solve_details.status_code == 101:  # success
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
@@ -236,12 +237,26 @@ class CplexSolver:
             )
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.objective_value
+            status = "success"
+
+        elif self.optimizer.solve_details.status_code == 108:  # time limit
+            df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            solve_time = self.optimizer.solve_details.time
+            objective_value = 1e6
+            status = "timeout"
+
+        elif self.optimizer.solve_details.status_code == 103:  # time limit
+            df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            solve_time = self.optimizer.solve_details.time
+            objective_value = 0
+            status = "infeasible"
 
         else:
             print("Could not find a solution")
             solve_time = 1e6
             objective_value = 1e6
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            status = "unknown"
 
         # write to file
         if len(save_filepath):
@@ -261,6 +276,7 @@ class CplexSolver:
             with open(save_filepath, "a") as f:
                 f.write(f"rt = {solve_time} \n")
                 f.write(f"obj = {objective_value} \n")
+                f.write(f"status = {status} \n")
 
         self.optimizer.clear()
 

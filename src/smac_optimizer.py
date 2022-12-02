@@ -30,8 +30,10 @@ def minimize_mip(config, seed: int = 0):
         df.loc[i] = config_parameters
     df.to_csv(f"{path}/config_info.csv")
 
-    mip_static_config = {"timelimit": 900}
+    mip_static_config = {"timelimit": 3600}
+
     objective_value_list = []
+
     print("Trying configuration: ")
     print(config)
 

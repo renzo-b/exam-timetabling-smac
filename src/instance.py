@@ -7,6 +7,7 @@ import pandas as pd
 # Global instance space
 # Possible Semester dates: a_20189, a_20191, a_20195, a_20199, a_20201, a_20205, a_20215, a_20219, a_20221, a_20225, a_20229, a_20231
 """ 
+Training instances SMAC -> used to find the best CPLEX config
 {'a_len_20189': 5262,
  'a_len_20191': 5189,
  'a_len_20195': 496,
@@ -14,6 +15,10 @@ import pandas as pd
  'a_len_20201': 5205,
  'a_len_20205': 1157,
  'a_len_20215': 771,
+"""
+
+"""
+Test instances: run best CPLEX -vs- default
  'a_len_20219': 5620,
  'a_len_20221': 5510,
  'a_len_20225': 1111,
@@ -43,8 +48,8 @@ INSTANCE_SPACE = [
     {
         "num_students": int(
             np.linspace(
-                student_per_semester[SEMESTER][0],
-                student_per_semester[SEMESTER][1],
+                student_per_semester[semester][0],
+                student_per_semester[semester][1],
                 NUMBER_INSTANCES,
             )[i]
         ),
@@ -52,8 +57,17 @@ INSTANCE_SPACE = [
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
-        "semester_date": SEMESTER,
+        "semester_date": semester,
     }
+    for semester in [
+        "a_20189",
+        "a_20191",
+        "a_20195",
+        "a_20199",
+        "a_20201",
+        "a_20205",
+        "a_20215",
+    ]
     for i in range(NUMBER_INSTANCES)
 ]
 
