@@ -126,12 +126,6 @@ class CplexSolver:
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-        # # C7 connect x_st variable to other variables
-        # for e in tqdm(range(len(E))):
-        #     for t in range(len(T)):
-        #         for s in range(len(S)):
-        #             self.optimizer.add_constraint(x_st[s,t] == (x[e, t] * He_s[e, s]))
-
         # C8 only one exam per day for each student
         for s in range(len(S)):
             k = 0

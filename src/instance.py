@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 # Global instance space
-# Possible Semester dates: a_20189, a_20191, a_20195, a_20199, a_20201, a_20205, a_20215, a_20219, a_20221, a_20225, a_20229, a_20231
 """ 
 Training instances SMAC -> used to find the best CPLEX config
 {'a_len_20189': 5262,
@@ -41,7 +40,15 @@ student_per_semester = {
     "a_20231": [3000, 5861],
 }
 
-SEMESTER = "a_20189"
+SEMESTERS = [
+    "a_20189",
+    "a_20191",
+    "a_20195",
+    "a_20199",
+    "a_20201",
+    "a_20205",
+    "a_20215",
+]
 
 NUMBER_INSTANCES = 5
 INSTANCE_SPACE = [
@@ -59,15 +66,7 @@ INSTANCE_SPACE = [
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "semester_date": semester,
     }
-    for semester in [
-        "a_20189",
-        "a_20191",
-        "a_20195",
-        "a_20199",
-        "a_20201",
-        "a_20205",
-        "a_20215",
-    ]
+    for semester in SEMESTERS
     for i in range(NUMBER_INSTANCES)
 ]
 
@@ -287,3 +286,4 @@ class ET_Instance:
         print(f"Number of rooms          : {len(self.room_set)}")
         print(f"Number of datetime slots : {len(self.datetime_slot_set)}")
         print(f"Shape of enrollments     : {self.courses_enrollments_set.shape}")
+        print(f"Ratio of inv/students    : {self.ratio_inv_students}")

@@ -10,31 +10,28 @@ from smac import Scenario
 from smac.acquisition.function import PriorAcquisitionFunction
 from smac.initial_design.default_design import DefaultInitialDesign
 
-from instance import INSTANCE_SPACE, get_ET_instance
+from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_H"
+SMAC_RUN_NAME = "minimize_cost_B"
+CPLEX_TIME_LIMIT = 3600  # seconds
 
 
-def minimize_mip(config, seed: int = 0):
-    folder_codename = (
-        SMAC_RUN_NAME + "_" + datetime.now().strftime("%y_%m_%d_%H_%M_%S_%K")
-    )
+def minimize_mip(config, seed: int = 1):
+    folder_codename = SMAC_RUN_NAME + "_" + datetime.now().strftime("%y_%m_%d_%H_%M")
     path = f"cplex_results/{folder_codename}"
     isExist = os.path.exists(path)
     if not isExist:
         os.makedirs(path)
 
-    df = pd.DataFrame(columns=config.keys())
-    for i, config_parameters in enumerate([config]):
-        df.loc[i] = config_parameters
-    df.to_csv(f"{path}/config_info.csv")
-
-    mip_static_config = {"timelimit": 3600}
-
+    config = config.get_dictionary()
+    mip_static_config = {"timelimit": CPLEX_TIME_LIMIT}
     objective_value_list = []
 
-    print("Trying configuration: ")
+    df = pd.DataFrame(config, index=[0])
+    df.to_csv(f"{path}/config_info.csv")
+
+    print("\n Trying configuration: ")
     print(config)
 
     for instance_num in range(len(INSTANCE_SPACE)):
@@ -76,10 +73,10 @@ if __name__ == "__main__":
         Categorical("mip_covers_switch", [-1, 0, 1, 2, 3], default=-1)
     )
     configspace.add_hyperparameter(
-        Float("number_of_cutting_plane_passes", [-1, 0], default=0)
+        Integer("number_of_cutting_plane_passes", [-1, 10], default=0)
     )
     configspace.add_hyperparameter(
-        Integer("cut_factor_row_multiplier_limit", [-1, 10], default=0)
+        Float("cut_factor_row_multiplier_limit", [-1, 10], default=-1)
     )  # any postive float,
     configspace.add_hyperparameter(
         Categorical("mip_dive_strategy", [0, 1, 2, 3], default=0)
@@ -97,7 +94,9 @@ if __name__ == "__main__":
         Categorical("mip_variable_selection_strategy", [-1, 0, 1, 2, 3, 4], default=0)
     )
 
-    scenario = Scenario(configspace, name=SMAC_RUN_NAME, n_trials=10)
+    scenario = Scenario(
+        configspace, name=SMAC_RUN_NAME, n_trials=30, seed=1, deterministic=True
+    )
 
     default_design = DefaultInitialDesign(scenario)
 
