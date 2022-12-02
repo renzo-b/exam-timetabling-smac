@@ -23,6 +23,19 @@ class CplexSolver:
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
         backtracking_tolerance = configuration_parameters["backtracking_tolerance"]
         mip_cliques_switch = configuration_parameters["mip_cliques_switch"]
+        """
+        New
+        """
+        # primal_dual_reduction_type = configuration_parameters["primal_dual_reduction_type"]
+        # aggregator = configuration_parameters["aggregator"]
+        node_presolve_switch = configuration_parameters["node_presolve_switch"]
+        presolve_dual_setting = configuration_parameters["presolve_dual_setting"]
+       
+        """
+        New
+        """
+        
+        
         coefficient_reduction_setting = configuration_parameters[
             "coefficient_reduction_setting"
         ]
@@ -52,6 +65,20 @@ class CplexSolver:
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
         self.optimizer.parameters.mip.strategy.backtrack = backtracking_tolerance
+        
+        """ 
+        New
+        """
+        #self.optimizer.parameters.preprocessing.reduce = primal_dual_reduction_type
+        #self.optimizer.parameters.preprocessing.aggregator = aggregator
+        self.optimizer.parameters.mip.strategy.presolvenode	= node_presolve_switch
+        self.optimizer.parameters.preprocessing.dual = presolve_dual_setting
+        
+        
+        '''
+        New
+        '''
+        
         self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
         self.optimizer.parameters.preprocessing.coeffreduce = (
             coefficient_reduction_setting

@@ -13,7 +13,7 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_E"
+SMAC_RUN_NAME = "minimize_cost_E_14_presolve_"
 CPLEX_TIME_LIMIT = 3600  # seconds
 MIP_GAP = 0.01  # 1 %
 
@@ -70,6 +70,25 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(
         Categorical("mip_cliques_switch", [-1, 0, 1, 2, 3], default=0)
     )
+    
+    """
+    New
+    """
+    # configspace.add_hyperparameter(
+    #     Categorical("primal_dual_reduction_type", [0, 1, 2, 3], default = 3)
+    # )
+    # configspace.add_hyperparameter(
+    #     Categorical("aggregator", [-1, 0, 1, 2, 3, 4, 5, 6], default = 0)
+    # )
+    configspace.add_hyperparameter(
+        Categorical("node_presolve_switch", [-1, 0, 1, 2, 3], default=0)
+    )
+    configspace.add_hyperparameter(
+        Categorical("presolve_dual_setting", [-1, 0, 1], default=0)
+    )
+    """ 
+    New
+    """
     configspace.add_hyperparameter(
         Categorical("coefficient_reduction_setting",
                     [-1, 0, 1, 2, 3], default=-1)
