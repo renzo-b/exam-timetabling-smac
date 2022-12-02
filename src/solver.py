@@ -17,6 +17,7 @@ class CplexSolver:
         Initializes a cplex solver with the given configuration parameters
         """
         timelimit = configuration_parameters["timelimit"]
+        mipgap = configuration_parameters["mipgap"]
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
@@ -46,6 +47,7 @@ class CplexSolver:
 
         self.optimizer = Model(name="solver")
         self.optimizer.parameters.timelimit = timelimit
+        self.optimizer.parameters.mip.tolerances.mipgap = mipgap
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
@@ -230,6 +232,7 @@ class CplexSolver:
 
         # process the solution
         if self.optimizer.solve_details.status_code == 101:  # success
+            print('processing success')
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
@@ -237,22 +240,34 @@ class CplexSolver:
             )
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.objective_value
-            status = "success"
+            status = "solution"
+
+        if self.optimizer.solve_details.status_code == 102:  # success
+            print('processing success w/ tolerance')
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            enrolment_df = create_enrolment_df(He_s, S, E)
+            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            )
+            solve_time = self.optimizer.solve_details.time
+            objective_value = self.optimizer.solve_details.best_bound
+            status = "solution"
 
         elif self.optimizer.solve_details.status_code == 108:  # time limit
+            print('processing timelimit')
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
             status = "timeout"
 
         elif self.optimizer.solve_details.status_code == 103:  # infeasible problem
+            print('processing infeasible')
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
             solve_time = self.optimizer.solve_details.time
             objective_value = 0
             status = "infeasible"
 
         else:
-            print("Could not find a solution")
             solve_time = 1e6
             objective_value = 1e6
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
@@ -268,10 +283,10 @@ class CplexSolver:
 
             for v in self.optimizer.iter_binary_vars():
                 with open(save_filepath, "a") as f:
-                    if sol:
-                        f.write(f"{v} = {v.solution_value} \n")
-                    else:
-                        f.write(f"{v} = {np.nan} \n")
+                    # if sol:
+                    f.write(f"{v} = {v.solution_value} \n")
+                    # else:
+                    #     f.write(f"{v} = {np.nan} \n")
 
             with open(save_filepath, "a") as f:
                 f.write(f"rt = {solve_time} \n")
