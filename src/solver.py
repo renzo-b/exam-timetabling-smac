@@ -251,7 +251,7 @@ class CplexSolver:
             )
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
-            status = "solution"
+            status = "bound"
 
         elif self.optimizer.solve_details.status_code == 108:  # time limit
             print('processing timelimit')
