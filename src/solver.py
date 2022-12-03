@@ -270,9 +270,7 @@ class CplexSolver:
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
             enrolment_df = create_enrolment_df(He_s, S, E)
-            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
-                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
-            )
+            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1)
             df_schedule.insert(loc=0,
                       column='Failed (Timeout)',
                       value='NaN')
