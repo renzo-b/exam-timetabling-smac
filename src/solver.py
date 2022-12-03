@@ -18,7 +18,7 @@ class CplexSolver:
         """
         timelimit = configuration_parameters["timelimit"]
         mipgap = configuration_parameters["mipgap"]
-        randomseed = configuration_parameters["randomseed"]
+        random_seed = configuration_parameters["random_seed"]
         
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
@@ -49,7 +49,7 @@ class CplexSolver:
         self.optimizer = Model(name="solver")
         self.optimizer.parameters.timelimit = timelimit
         self.optimizer.parameters.mip.tolerances.mipgap = mipgap
-        self.optimizer.parameters.randomseed = randomseed  
+        self.optimizer.parameters.randomseed = random_seed  
         
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
@@ -268,6 +268,14 @@ class CplexSolver:
         elif self.optimizer.solve_details.status_code == 108:  # time limit
             print('processing timelimit')
             df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            enrolment_df = create_enrolment_df(He_s, S, E)
+            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            )
+            df_schedule.insert(loc=0,
+                      column='Failed (Timeout)',
+                      value='NaN')
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
             status = "timeout"

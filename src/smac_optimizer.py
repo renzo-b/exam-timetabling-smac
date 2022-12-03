@@ -13,10 +13,10 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_F_14"
+SMAC_RUN_NAME = "minimize_cost_G_14"
 CPLEX_TIME_LIMIT = 3600  # seconds
 MIP_GAP = 0.01  # 1 %
-randomseed = 10
+random_seed = 10
 
 def minimize_mip(config, seed: int = 1):
     folder_codename = SMAC_RUN_NAME + "_" + \
@@ -27,7 +27,7 @@ def minimize_mip(config, seed: int = 1):
         os.makedirs(path)
 
     config = config.get_dictionary()
-    mip_static_config = {"timelimit": CPLEX_TIME_LIMIT, "mipgap": MIP_GAP, "seed": randomseed}
+    mip_static_config = {"timelimit": CPLEX_TIME_LIMIT, "mipgap": MIP_GAP, "random_seed": random_seed}
     objective_value_list = []
 
     df = pd.DataFrame(config, index=[0])
