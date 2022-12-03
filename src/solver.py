@@ -18,54 +18,43 @@ class CplexSolver:
         """
         timelimit = configuration_parameters["timelimit"]
         mipgap = configuration_parameters["mipgap"]
+        randomseed = configuration_parameters["randomseed"]
+        
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
         backtracking_tolerance = configuration_parameters["backtracking_tolerance"]
-        mip_cliques_switch = configuration_parameters["mip_cliques_switch"]
+        # mip_cliques_switch = configuration_parameters["mip_cliques_switch"]
         """
         New
         """
         # primal_dual_reduction_type = configuration_parameters["primal_dual_reduction_type"]
-        # aggregator = configuration_parameters["aggregator"]
+        #aggregator = configuration_parameters["aggregator"]
         node_presolve_switch = configuration_parameters["node_presolve_switch"]
         presolve_dual_setting = configuration_parameters["presolve_dual_setting"]
-       
+        
         """
         New
         """
-        
-        
-        coefficient_reduction_setting = configuration_parameters[
-            "coefficient_reduction_setting"
-        ]
-        mip_covers_switch = configuration_parameters["mip_covers_switch"]
-        number_of_cutting_plane_passes = configuration_parameters[
-            "number_of_cutting_plane_passes"
-        ]
-        cut_factor_row_multiplier_limit = configuration_parameters[
-            "cut_factor_row_multiplier_limit"
-        ]
+        coefficient_reduction_setting = configuration_parameters["coefficient_reduction_setting"]
+        #mip_covers_switch = configuration_parameters["mip_covers_switch"]
+        #number_of_cutting_plane_passes = configuration_parameters["number_of_cutting_plane_passes"]
+        #cut_factor_row_multiplier_limit = configuration_parameters["cut_factor_row_multiplier_limit"]
         mip_dive_strategy = configuration_parameters["mip_dive_strategy"]
-        dual_simplex_pricing_algorithm = configuration_parameters[
-            "dual_simplex_pricing_algorithm"
-        ]
+        # dual_simplex_pricing_algorithm = configuration_parameters["dual_simplex_pricing_algorithm"]
         mip_subproblem_algorithm = configuration_parameters["mip_subproblem_algorithm"]
-        mip_node_selection_strategy = configuration_parameters[
-            "mip_node_selection_strategy"
-        ]
-        mip_variable_selection_strategy = configuration_parameters[
-            "mip_variable_selection_strategy"
-        ]
+        mip_node_selection_strategy = configuration_parameters["mip_node_selection_strategy"]
+        mip_variable_selection_strategy = configuration_parameters["mip_variable_selection_strategy"]
 
         self.optimizer = Model(name="solver")
         self.optimizer.parameters.timelimit = timelimit
         self.optimizer.parameters.mip.tolerances.mipgap = mipgap
+        self.optimizer.parameters.randomseed = randomseed  
+        
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
         self.optimizer.parameters.mip.strategy.backtrack = backtracking_tolerance
-        
         """ 
         New
         """
@@ -73,28 +62,24 @@ class CplexSolver:
         #self.optimizer.parameters.preprocessing.aggregator = aggregator
         self.optimizer.parameters.mip.strategy.presolvenode	= node_presolve_switch
         self.optimizer.parameters.preprocessing.dual = presolve_dual_setting
-        
-        
+  
         '''
         New
-        '''
         
-        self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
-        self.optimizer.parameters.preprocessing.coeffreduce = (
-            coefficient_reduction_setting
-        )
-        self.optimizer.parameters.mip.cuts.covers = mip_covers_switch
-        self.optimizer.parameters.mip.limits.cutpasses = number_of_cutting_plane_passes
-        self.optimizer.parameters.mip.limits.cutsfactor = (
-            cut_factor_row_multiplier_limit
-        )
+        Things to note: Is our problem primal or dual linear programming? For the MUP subproblem algorithm trying value of 2 (being Dual simplex) 
+            performed better than value 1 (primal simplex). Can we use LP relaxation?
+        '''
+        #self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
+        self.optimizer.parameters.preprocessing.coeffreduce = coefficient_reduction_setting
+    
+        #self.optimizer.parameters.mip.cuts.covers = mip_covers_switch
+        #self.optimizer.parameters.mip.limits.cutpasses = number_of_cutting_plane_passes
+        #self.optimizer.parameters.mip.limits.cutsfactor = cut_factor_row_multiplier_limit
         self.optimizer.parameters.mip.strategy.dive = mip_dive_strategy
-        self.optimizer.parameters.simplex.dgradient = dual_simplex_pricing_algorithm
+        #self.optimizer.parameters.simplex.dgradient = dual_simplex_pricing_algorithm
         self.optimizer.parameters.mip.strategy.subalgorithm = mip_subproblem_algorithm
         self.optimizer.parameters.mip.strategy.nodeselect = mip_node_selection_strategy
-        self.optimizer.parameters.mip.strategy.variableselect = (
-            mip_variable_selection_strategy
-        )
+        self.optimizer.parameters.mip.strategy.variableselect = mip_variable_selection_strategy
 
         return
 
@@ -157,7 +142,7 @@ class CplexSolver:
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-        # C8 only one exam per day for each student
+        # C7 only one exam per day for each student
         for s in range(len(S)):
             k = 0
             for i in range(ceil(len(T) / 3)):

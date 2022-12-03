@@ -13,10 +13,10 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_E_14_presolve_"
+SMAC_RUN_NAME = "minimize_cost_F_14"
 CPLEX_TIME_LIMIT = 3600  # seconds
 MIP_GAP = 0.01  # 1 %
-
+randomseed = 10
 
 def minimize_mip(config, seed: int = 1):
     folder_codename = SMAC_RUN_NAME + "_" + \
@@ -27,7 +27,7 @@ def minimize_mip(config, seed: int = 1):
         os.makedirs(path)
 
     config = config.get_dictionary()
-    mip_static_config = {"timelimit": CPLEX_TIME_LIMIT, "mipgap": MIP_GAP}
+    mip_static_config = {"timelimit": CPLEX_TIME_LIMIT, "mipgap": MIP_GAP, "seed": randomseed}
     objective_value_list = []
 
     df = pd.DataFrame(config, index=[0])
@@ -67,9 +67,9 @@ if __name__ == "__main__":
         Float("backtracking_tolerance", [
               0.000000001, 0.999999999], default=0.99)
     )
-    configspace.add_hyperparameter(
-        Categorical("mip_cliques_switch", [-1, 0, 1, 2, 3], default=0)
-    )
+    # configspace.add_hyperparameter(
+    #     Categorical("mip_cliques_switch", [-1, 0, 1, 2, 3], default=0)
+    # )
     
     """
     New
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     #     Categorical("primal_dual_reduction_type", [0, 1, 2, 3], default = 3)
     # )
     # configspace.add_hyperparameter(
-    #     Categorical("aggregator", [-1, 0, 1, 2, 3, 4, 5, 6], default = 0)
+    #     Categorical("aggregator", [-1, 0, 1, 2, 3, 4, 5, 6], default = 1)
     # )
     configspace.add_hyperparameter(
         Categorical("node_presolve_switch", [-1, 0, 1, 2, 3], default=0)
@@ -86,32 +86,33 @@ if __name__ == "__main__":
     configspace.add_hyperparameter(
         Categorical("presolve_dual_setting", [-1, 0, 1], default=0)
     )
+    
     """ 
     New
     """
     configspace.add_hyperparameter(
         Categorical("coefficient_reduction_setting",
-                    [-1, 0, 1, 2, 3], default=-1)
+                    [-1, 0, 1, 2, 3], default=-1) #tried using value 0 -> had longer computation times for instances
     )
-    configspace.add_hyperparameter(
-        Categorical("mip_covers_switch", [-1, 0, 1, 2, 3], default=-1)
-    )
-    configspace.add_hyperparameter(
-        Integer("number_of_cutting_plane_passes", [-1, 10], default=0)
-    )
-    configspace.add_hyperparameter(
-        Float("cut_factor_row_multiplier_limit", [-1, 10], default=-1)
-    )  # any postive float,
+    # configspace.add_hyperparameter(
+    #     Categorical("mip_covers_switch", [-1, 0, 1, 2, 3], default=-1)
+    # )
+    # configspace.add_hyperparameter(
+    #     Integer("number_of_cutting_plane_passes", [-1, 10], default=0)
+    # )
+    # configspace.add_hyperparameter(
+    #     Float("cut_factor_row_multiplier_limit", [-1, 10], default=-1)
+    # )  # any postive float,
     configspace.add_hyperparameter(
         Categorical("mip_dive_strategy", [0, 1, 2, 3], default=0)
     )
+    # configspace.add_hyperparameter(
+    #     Categorical("dual_simplex_pricing_algorithm",
+    #                 [0, 1, 2, 3, 4, 5], default=0)
+    # )
     configspace.add_hyperparameter(
-        Categorical("dual_simplex_pricing_algorithm",
-                    [0, 1, 2, 3, 4, 5], default=0)
-    )
-    configspace.add_hyperparameter(
-        Categorical("mip_subproblem_algorithm", [0, 1, 2, 3, 4, 5], default=0)
-    )
+        Categorical("mip_subproblem_algorithm", [0, 1, 2, 3, 4, 5], default=0) #value 1 -> had longer computation times for instances
+    )                                                                          #value 2 -> had shorter computation times for instances
     configspace.add_hyperparameter(
         Categorical("mip_node_selection_strategy", [0, 1, 2, 3], default=1)
     )
