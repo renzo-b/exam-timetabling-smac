@@ -243,32 +243,36 @@ class CplexSolver:
               self.optimizer.solve_details.status_code)
 
         # process the solution
+            
         if self.optimizer.solve_details.status_code == 101:  # success
             print('processing success')
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
             )
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.objective_value
+            print("SUC (101): SOLVE TIME:", solve_time)
+            print("SUC (101): OBJ VALUE:", objective_value)
             status = "solution"
-
-        if self.optimizer.solve_details.status_code == 102:  # success
+            
+        elif self.optimizer.solve_details.status_code == 102:  # success
             print('processing success w/ tolerance')
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
             )
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
+            print("SUC (102): SOLVE TIME:", solve_time)
+            print("SUC (102): OBJ VALUE:", objective_value)
             status = "bound"
 
-        elif self.optimizer.solve_details.status_code == 108:  # time limit
+        elif self.optimizer.solve_details.status_code == 107:  # time limit
             print('processing timelimit')
-            df_schedule = pd.DataFrame({"F": ["Failed :("]})
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R)
+            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1)
             df_schedule.insert(loc=0,
@@ -276,21 +280,27 @@ class CplexSolver:
                       value='NaN')
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
+            print("FAIL (107 TimeLimit): SOLVE TIME:", solve_time)
+            print("FAIL (107 TimeLimit): OBJ VALUE:", objective_value)
             status = "timeout"
 
         elif self.optimizer.solve_details.status_code == 103:  # infeasible problem
             print('processing infeasible')
-            df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
             solve_time = self.optimizer.solve_details.time
             objective_value = 0
+            print("FAIL (103 infeasible): SOLVE TIME:", solve_time)
+            print("FAIL (103 infeasible): OBJ VALUE:", objective_value)
             status = "infeasible"
 
         else:
             solve_time = 1e6
             objective_value = 1e6
-            df_schedule = pd.DataFrame({"F": ["Failed :("]})
+            df_schedule = pd.DataFrame({"F": ["Failed (unknown)"]})
+            print("FAIL UKNOWN")
             status = "unknown"
-
+            
+    
         # write to file
         if len(save_filepath):
             path = save_filepath.split("/instance")[0]
@@ -315,7 +325,7 @@ class CplexSolver:
 
         return solve_time, objective_value, df_schedule
 
-    def process_solution(self, sol, x, y, E, T, R):
+    def process_solution(self, sol, x, y, E, T, R, Cp):
         """
         Takes a cplex solution and produces a exam schedule
 
@@ -351,9 +361,11 @@ class CplexSolver:
         # Add rows with the names of courses and rooms
         exam_col = [E[i] for i in range(len(E)) for j in range(len(R))]
         room_col = [R[j] for i in range(len(E)) for j in range(len(R))]
+        r = R.tolist()
+        Cp_col = [Cp[r.index(r[j])] for i in range(len(E)) for j in range(len(R))]
         df_y["EXAM"] = exam_col
         df_y["ROOM"] = room_col
-
+        df_y["Room Size"] = Cp_col
         # Produce the final schedule
         final_schedule = df_x[df_x["value"] == 1].merge(
             df_y[df_y["value"] == 1], on="EXAM", how="left"
@@ -369,15 +381,14 @@ def create_enrolment_df(He_s: np.array, S, E) -> pd.DataFrame:
     Creates a dataframe with the students for each exam/course
     """
     exam_student_pairs = []
+    exam_student_pairs_len = []
     for exam in range(len(He_s)):
         students_in_exam_e = []
         for i, student in enumerate(He_s[exam]):
             if student == 1:
                 students_in_exam_e.append(S[i])
         exam_student_pairs.append(students_in_exam_e)
-
-    enrolment_df = pd.DataFrame(columns=["EXAM", "student"])
-    enrolment_df["EXAM"] = E
-    enrolment_df["student"] = exam_student_pairs
+        exam_student_pairs_len.append(len(students_in_exam_e))
+    enrolment_df = pd.DataFrame({'EXAM': E,'Class Size': exam_student_pairs_len,'Student ID':exam_student_pairs})
 
     return enrolment_df

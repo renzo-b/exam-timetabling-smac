@@ -50,7 +50,8 @@ SEMESTERS = [
     "a_20215",
 ]
 
-NUMBER_INSTANCES = 5
+NUMBER_INSTANCES = 2
+semester = 'a_20195'
 INSTANCE_SPACE = [
     {
         "num_students": int(
@@ -66,7 +67,7 @@ INSTANCE_SPACE = [
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "semester_date": semester,
     }
-    for semester in SEMESTERS
+    #for semester in SEMESTERS
     for i in range(NUMBER_INSTANCES)
 ]
 
@@ -182,7 +183,7 @@ def get_dataset(
     # storing
     exam_set = t_E
     student_set = t_S
-    datetime_slot_set = list(range(64))  # examdate_time_list
+    datetime_slot_set = examdate_time_list # list(range(64))  # examdate_time_list
     room_set = ava_rooms
     room_capacity_set = ava_room_cap
     courses_enrollments_set = t_C.values

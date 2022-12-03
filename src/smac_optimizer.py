@@ -13,7 +13,7 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "minimize_cost_G_14"
+SMAC_RUN_NAME = "MC_14_Trial_"
 CPLEX_TIME_LIMIT = 3600  # seconds
 MIP_GAP = 0.01  # 1 %
 random_seed = 10
