@@ -49,9 +49,16 @@ SEMESTERS = [
     "a_20205",
     "a_20215",
 ]
+TEST_SEMESTERS = [
+    "a_20219",
+    "a_20221",
+    "a_20225",
+    "a_20229",
+    "a_20231",
+]
 
-NUMBER_INSTANCES = 2
-semester = 'a_20195'
+NUMBER_INSTANCES = 1
+# semester = "a_20195"
 INSTANCE_SPACE = [
     {
         "num_students": int(
@@ -67,8 +74,20 @@ INSTANCE_SPACE = [
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "semester_date": semester,
     }
-    #for semester in SEMESTERS
+    for semester in SEMESTERS
     for i in range(NUMBER_INSTANCES)
+]
+
+TEST_INSTANCE_SPACE = [
+    {
+        "num_students": student_per_semester[semester][1],
+        "every_n_room": 1,
+        "np_seed": 1,
+        "room_avail_p": 1,
+        "prof_avail_p": 1,
+        "semester_date": semester,
+    }
+    for semester in TEST_SEMESTERS
 ]
 
 
@@ -183,7 +202,7 @@ def get_dataset(
     # storing
     exam_set = t_E
     student_set = t_S
-    datetime_slot_set = examdate_time_list # list(range(64))  # examdate_time_list
+    datetime_slot_set = examdate_time_list  # list(range(64))  # examdate_time_list
     room_set = ava_rooms
     room_capacity_set = ava_room_cap
     courses_enrollments_set = t_C.values
