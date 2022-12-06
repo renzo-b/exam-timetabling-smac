@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from docplex.mp.model import Model
 from docplex.mp.progress import TextProgressListener
+from docplex.mp.utils import DOcplexException
 from tqdm import tqdm
 
 
@@ -19,7 +20,7 @@ class CplexSolver:
         timelimit = configuration_parameters["timelimit"]
         mipgap = configuration_parameters["mipgap"]
         random_seed = configuration_parameters["random_seed"]
-        
+
         lpmethod = configuration_parameters["lpmethod"]
         mip_s_bbinterval = configuration_parameters["mip_s_bbinterval"]
         mip_branching_direction = configuration_parameters["mip_branching_direction"]
@@ -29,28 +30,34 @@ class CplexSolver:
         New
         """
         # primal_dual_reduction_type = configuration_parameters["primal_dual_reduction_type"]
-        #aggregator = configuration_parameters["aggregator"]
+        # aggregator = configuration_parameters["aggregator"]
         node_presolve_switch = configuration_parameters["node_presolve_switch"]
         presolve_dual_setting = configuration_parameters["presolve_dual_setting"]
-        
+
         """
         New
         """
-        coefficient_reduction_setting = configuration_parameters["coefficient_reduction_setting"]
-        #mip_covers_switch = configuration_parameters["mip_covers_switch"]
-        #number_of_cutting_plane_passes = configuration_parameters["number_of_cutting_plane_passes"]
-        #cut_factor_row_multiplier_limit = configuration_parameters["cut_factor_row_multiplier_limit"]
+        coefficient_reduction_setting = configuration_parameters[
+            "coefficient_reduction_setting"
+        ]
+        # mip_covers_switch = configuration_parameters["mip_covers_switch"]
+        # number_of_cutting_plane_passes = configuration_parameters["number_of_cutting_plane_passes"]
+        # cut_factor_row_multiplier_limit = configuration_parameters["cut_factor_row_multiplier_limit"]
         mip_dive_strategy = configuration_parameters["mip_dive_strategy"]
         # dual_simplex_pricing_algorithm = configuration_parameters["dual_simplex_pricing_algorithm"]
         mip_subproblem_algorithm = configuration_parameters["mip_subproblem_algorithm"]
-        mip_node_selection_strategy = configuration_parameters["mip_node_selection_strategy"]
-        mip_variable_selection_strategy = configuration_parameters["mip_variable_selection_strategy"]
+        mip_node_selection_strategy = configuration_parameters[
+            "mip_node_selection_strategy"
+        ]
+        mip_variable_selection_strategy = configuration_parameters[
+            "mip_variable_selection_strategy"
+        ]
 
         self.optimizer = Model(name="solver")
         self.optimizer.parameters.timelimit = timelimit
         self.optimizer.parameters.mip.tolerances.mipgap = mipgap
-        self.optimizer.parameters.randomseed = random_seed  
-        
+        self.optimizer.parameters.randomseed = random_seed
+
         self.optimizer.parameters.lpmethod = lpmethod
         self.optimizer.parameters.mip.strategy.bbinterval = mip_s_bbinterval
         self.optimizer.parameters.mip.strategy.branch = mip_branching_direction
@@ -58,28 +65,32 @@ class CplexSolver:
         """ 
         New
         """
-        #self.optimizer.parameters.preprocessing.reduce = primal_dual_reduction_type
-        #self.optimizer.parameters.preprocessing.aggregator = aggregator
-        self.optimizer.parameters.mip.strategy.presolvenode	= node_presolve_switch
+        # self.optimizer.parameters.preprocessing.reduce = primal_dual_reduction_type
+        # self.optimizer.parameters.preprocessing.aggregator = aggregator
+        self.optimizer.parameters.mip.strategy.presolvenode = node_presolve_switch
         self.optimizer.parameters.preprocessing.dual = presolve_dual_setting
-  
-        '''
+
+        """
         New
         
         Things to note: Is our problem primal or dual linear programming? For the MUP subproblem algorithm trying value of 2 (being Dual simplex) 
             performed better than value 1 (primal simplex). Can we use LP relaxation?
-        '''
-        #self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
-        self.optimizer.parameters.preprocessing.coeffreduce = coefficient_reduction_setting
-    
-        #self.optimizer.parameters.mip.cuts.covers = mip_covers_switch
-        #self.optimizer.parameters.mip.limits.cutpasses = number_of_cutting_plane_passes
-        #self.optimizer.parameters.mip.limits.cutsfactor = cut_factor_row_multiplier_limit
+        """
+        # self.optimizer.parameters.mip.cuts.cliques = mip_cliques_switch
+        self.optimizer.parameters.preprocessing.coeffreduce = (
+            coefficient_reduction_setting
+        )
+
+        # self.optimizer.parameters.mip.cuts.covers = mip_covers_switch
+        # self.optimizer.parameters.mip.limits.cutpasses = number_of_cutting_plane_passes
+        # self.optimizer.parameters.mip.limits.cutsfactor = cut_factor_row_multiplier_limit
         self.optimizer.parameters.mip.strategy.dive = mip_dive_strategy
-        #self.optimizer.parameters.simplex.dgradient = dual_simplex_pricing_algorithm
+        # self.optimizer.parameters.simplex.dgradient = dual_simplex_pricing_algorithm
         self.optimizer.parameters.mip.strategy.subalgorithm = mip_subproblem_algorithm
         self.optimizer.parameters.mip.strategy.nodeselect = mip_node_selection_strategy
-        self.optimizer.parameters.mip.strategy.variableselect = mip_variable_selection_strategy
+        self.optimizer.parameters.mip.strategy.variableselect = (
+            mip_variable_selection_strategy
+        )
 
         return
 
@@ -91,8 +102,7 @@ class CplexSolver:
         y = self.optimizer.binary_var_matrix(
             len(E), len(R), name="Y_e,r"
         )  # whether we use room r for exam e
-        x_etr = self.optimizer.binary_var_cube(
-            len(E), len(T), len(R), name="xetr")
+        x_etr = self.optimizer.binary_var_cube(len(E), len(T), len(R), name="xetr")
 
         x_st = self.optimizer.binary_var_matrix(
             len(S), len(T), name="x_st"
@@ -126,8 +136,7 @@ class CplexSolver:
         )
         self.optimizer.add_constraints(
             (
-                sum(x_etr[e, t, r] * sumHe_s[e]
-                    for e in range(len(E))) <= Cp[r]
+                sum(x_etr[e, t, r] * sumHe_s[e] for e in range(len(E))) <= Cp[r]
                 for r in tqdm(range(len(R)))
                 for t in range(len(T))
             )
@@ -164,16 +173,14 @@ class CplexSolver:
             r = idx[0]
             t = idx[1]
 
-            self.optimizer.add_constraints(
-                (x_etr[e, t, r] == 0) for e in range(len(E)))
+            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for e in range(len(E)))
 
         for idx in np.argwhere(prof_availability == 1):
             e = idx[0]
             t = idx[1]
 
             self.optimizer.add_constraint(x[e, t] == 0)
-            self.optimizer.add_constraints(
-                (x_etr[e, t, r] == 0) for r in range(len(R)))
+            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for r in range(len(R)))
 
     def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv):
         up = (
@@ -236,16 +243,18 @@ class CplexSolver:
             log_output = True
         else:
             log_output = False
-        sol = self.optimizer.solve(
-            log_output=log_output, clean_before_solve=True)
+        sol = self.optimizer.solve(log_output=log_output, clean_before_solve=True)
 
-        print(self.optimizer.solve_details.status, ' status code: ',
-              self.optimizer.solve_details.status_code)
+        print(
+            self.optimizer.solve_details.status,
+            " status code: ",
+            self.optimizer.solve_details.status_code,
+        )
 
         # process the solution
-            
+
         if self.optimizer.solve_details.status_code == 101:  # success
-            print('processing success')
+            print("processing success")
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
@@ -256,9 +265,9 @@ class CplexSolver:
             print("SUC (101): SOLVE TIME:", solve_time)
             print("SUC (101): OBJ VALUE:", objective_value)
             status = "solution"
-            
+
         elif self.optimizer.solve_details.status_code == 102:  # success
-            print('processing success w/ tolerance')
+            print("processing success w/ tolerance")
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
@@ -271,13 +280,13 @@ class CplexSolver:
             status = "bound"
 
         elif self.optimizer.solve_details.status_code == 107:  # time limit
-            print('processing timelimit')
+            print("processing timelimit")
             schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
             enrolment_df = create_enrolment_df(He_s, S, E)
-            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1)
-            df_schedule.insert(loc=0,
-                      column='Failed (Timeout)',
-                      value='NaN')
+            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            )
+            df_schedule.insert(loc=0, column="Failed (Timeout)", value="NaN")
             solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
             print("FAIL (107 TimeLimit): SOLVE TIME:", solve_time)
@@ -285,7 +294,7 @@ class CplexSolver:
             status = "timeout"
 
         elif self.optimizer.solve_details.status_code == 103:  # infeasible problem
-            print('processing infeasible')
+            print("processing infeasible")
             df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
             solve_time = self.optimizer.solve_details.time
             objective_value = 0
@@ -299,8 +308,7 @@ class CplexSolver:
             df_schedule = pd.DataFrame({"F": ["Failed (unknown)"]})
             print("FAIL UKNOWN")
             status = "unknown"
-            
-    
+
         # write to file
         if len(save_filepath):
             path = save_filepath.split("/instance")[0]
@@ -309,12 +317,15 @@ class CplexSolver:
             if not isExist:
                 os.makedirs(path)
 
-            for v in self.optimizer.iter_binary_vars():
-                with open(save_filepath, "a") as f:
-                    # if sol:
-                    f.write(f"{v} = {v.solution_value} \n")
-                    # else:
-                    #     f.write(f"{v} = {np.nan} \n")
+            try:
+                for v in self.optimizer.iter_binary_vars():
+                    with open(save_filepath, "a") as f:
+                        # if sol:
+                        f.write(f"{v} = {v.solution_value} \n")
+                        # else:
+                        #     f.write(f"{v} = {np.nan} \n")
+            except DOcplexException:
+                pass
 
             with open(save_filepath, "a") as f:
                 f.write(f"rt = {solve_time} \n")
@@ -349,8 +360,7 @@ class CplexSolver:
         df_x = sol.get_value_df(x).rename(
             columns={"key_1": "exam", "key_2": "timeslot"}
         )
-        df_y = sol.get_value_df(y).rename(
-            columns={"key_1": "exam", "key_2": "room"})
+        df_y = sol.get_value_df(y).rename(columns={"key_1": "exam", "key_2": "room"})
 
         # Add rows with the names of courses and timelots
         exam_col = [E[i] for i in range(len(E)) for j in range(len(T))]
@@ -370,8 +380,7 @@ class CplexSolver:
         final_schedule = df_x[df_x["value"] == 1].merge(
             df_y[df_y["value"] == 1], on="EXAM", how="left"
         )
-        final_schedule = final_schedule.sort_values(
-            by=["timeslot"], ascending=True)
+        final_schedule = final_schedule.sort_values(by=["timeslot"], ascending=True)
 
         return final_schedule, df_x, df_y
 
@@ -389,6 +398,12 @@ def create_enrolment_df(He_s: np.array, S, E) -> pd.DataFrame:
                 students_in_exam_e.append(S[i])
         exam_student_pairs.append(students_in_exam_e)
         exam_student_pairs_len.append(len(students_in_exam_e))
-    enrolment_df = pd.DataFrame({'EXAM': E,'Class Size': exam_student_pairs_len,'Student ID':exam_student_pairs})
+    enrolment_df = pd.DataFrame(
+        {
+            "EXAM": E,
+            "Class Size": exam_student_pairs_len,
+            "Student ID": exam_student_pairs,
+        }
+    )
 
     return enrolment_df
