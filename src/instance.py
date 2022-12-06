@@ -14,16 +14,39 @@ Training instances SMAC -> used to find the best CPLEX config
  'a_len_20201': 5205,
  'a_len_20205': 1157,
  'a_len_20215': 771,
+  'a_len_20221': 5510,
+  a_len_20231': 5861
+  
+  
+  
+a_[20231, 20191]: 10063
+a_[20231, 20199]: 9097
+a_[20231, 20201]: 9005
+a_[20221, 20199]: 7878
+a_[20221, 20231]: 7044
+a_[20221, 20201]: 7782
+a_[20191, 20221]: 8859
 """
 
 """
 Test instances: run best CPLEX -vs- default
  'a_len_20219': 5620,
- 'a_len_20221': 5510,
  'a_len_20225': 1111,
  'a_len_20229': 5916,
- 'a_len_20231': 5861}
+ }
 """
+
+
+merged_semester = {
+    "a_[20231, 20191]": 10063,
+    "a_[20231, 20199]": 9097,
+    "a_[20231, 20201]": 9005,
+    "a_[20221, 20199]": 7878,
+    "a_[20221, 20231]": 7044,
+    "a_[20221, 20201]": 7782,
+    "a_[20191, 20221]": 8859,
+    
+}
 
 student_per_semester = {
     "a_20189": [3000, 5262],
@@ -63,8 +86,9 @@ INSTANCE_SPACE = [
     {
         "num_students": int(
             np.linspace(
-                student_per_semester[semester][0],
-                student_per_semester[semester][1],
+                merged_semester[semester],
+                #student_per_semester[semester][0],
+                #student_per_semester[semester][1],
                 NUMBER_INSTANCES,
             )[i]
         ),
@@ -74,20 +98,20 @@ INSTANCE_SPACE = [
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "semester_date": semester,
     }
-    for semester in SEMESTERS
+    for semester in merged_semester
     for i in range(NUMBER_INSTANCES)
 ]
 
 TEST_INSTANCE_SPACE = [
     {
-        "num_students": student_per_semester[semester][1],
+        "num_students": student_per_semester[semester_t][1],
         "every_n_room": 1,
         "np_seed": 1,
         "room_avail_p": 1,
         "prof_avail_p": 1,
-        "semester_date": semester,
+        "semester_date": semester_t,
     }
-    for semester in TEST_SEMESTERS
+    for semester_t in TEST_SEMESTERS
 ]
 
 
@@ -130,12 +154,24 @@ def get_dataset(
         "ACAD_ACT_CD"
     ].str.cat(hist_anonymized_enrolments["SECTION_CD"])
 
-    semeser_list = np.unique(hist_anonymized_enrolments["SESSION_CD"]).tolist()
+    # semeser_list = np.unique(hist_anonymized_enrolments["SESSION_CD"]).tolist()
+    # anan_sem = {}
+    # for sem in semeser_list:
+    #     anan_sem["a_{}".format(sem)] = hist_anonymized_enrolments[
+    #         hist_anonymized_enrolments["SESSION_CD"] == sem
+    #     ]
+    
+
+    large_semester_list = [[20231, 20191], [20231, 20199], [20231, 20201], [
+        20221, 20199], [20221, 20231], [20221, 20201], [20191, 20221]]
+
     anan_sem = {}
-    for sem in semeser_list:
-        anan_sem["a_{}".format(sem)] = hist_anonymized_enrolments[
-            hist_anonymized_enrolments["SESSION_CD"] == sem
-        ]
+    name_list = []
+    for merge_sem in large_semester_list:
+        name = "a_{}".format(merge_sem)
+        name_list.append(name)
+        anan_sem[name] = hist_anonymized_enrolments[(hist_anonymized_enrolments['SESSION_CD'] == merge_sem[0]) | (
+            hist_anonymized_enrolments['SESSION_CD'] == merge_sem[1])]
 
     semester_df = anan_sem[semester_date]
 
