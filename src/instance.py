@@ -45,7 +45,6 @@ merged_semester = {
     "a_[20221, 20231]": 7044,
     "a_[20221, 20201]": 7782,
     "a_[20191, 20221]": 8859,
-    
 }
 
 student_per_semester = {
@@ -86,9 +85,9 @@ INSTANCE_SPACE = [
     {
         "num_students": int(
             np.linspace(
-                merged_semester[semester],
-                #student_per_semester[semester][0],
-                #student_per_semester[semester][1],
+                # merged_semester[semester],
+                student_per_semester[semester][0],
+                student_per_semester[semester][1],
                 NUMBER_INSTANCES,
             )[i]
         ),
@@ -98,7 +97,7 @@ INSTANCE_SPACE = [
         "prof_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
         "semester_date": semester,
     }
-    for semester in merged_semester
+    for semester in SEMESTERS
     for i in range(NUMBER_INSTANCES)
 ]
 
@@ -154,24 +153,32 @@ def get_dataset(
         "ACAD_ACT_CD"
     ].str.cat(hist_anonymized_enrolments["SECTION_CD"])
 
-    # semeser_list = np.unique(hist_anonymized_enrolments["SESSION_CD"]).tolist()
-    # anan_sem = {}
-    # for sem in semeser_list:
-    #     anan_sem["a_{}".format(sem)] = hist_anonymized_enrolments[
-    #         hist_anonymized_enrolments["SESSION_CD"] == sem
-    #     ]
-    
-
-    large_semester_list = [[20231, 20191], [20231, 20199], [20231, 20201], [
-        20221, 20199], [20221, 20231], [20221, 20201], [20191, 20221]]
-
+    semeser_list = np.unique(hist_anonymized_enrolments["SESSION_CD"]).tolist()
     anan_sem = {}
-    name_list = []
-    for merge_sem in large_semester_list:
-        name = "a_{}".format(merge_sem)
-        name_list.append(name)
-        anan_sem[name] = hist_anonymized_enrolments[(hist_anonymized_enrolments['SESSION_CD'] == merge_sem[0]) | (
-            hist_anonymized_enrolments['SESSION_CD'] == merge_sem[1])]
+    for sem in semeser_list:
+        anan_sem["a_{}".format(sem)] = hist_anonymized_enrolments[
+            hist_anonymized_enrolments["SESSION_CD"] == sem
+        ]
+
+    # large_semester_list = [
+    #     [20231, 20191],
+    #     [20231, 20199],
+    #     [20231, 20201],
+    #     [20221, 20199],
+    #     [20221, 20231],
+    #     [20221, 20201],
+    #     [20191, 20221],
+    # ]
+
+    # anan_sem = {}
+    # name_list = []
+    # for merge_sem in large_semester_list:
+    #     name = "a_{}".format(merge_sem)
+    #     name_list.append(name)
+    #     anan_sem[name] = hist_anonymized_enrolments[
+    #         (hist_anonymized_enrolments["SESSION_CD"] == merge_sem[0])
+    #         | (hist_anonymized_enrolments["SESSION_CD"] == merge_sem[1])
+    #     ]
 
     semester_df = anan_sem[semester_date]
 
