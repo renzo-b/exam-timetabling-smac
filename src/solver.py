@@ -152,19 +152,19 @@ class CplexSolver:
                     self.optimizer.add_constraint(cond <= 1)
 
         # C7 only one exam per day for each student
-        for s in range(len(S)):
-            k = 0
-            for i in range(ceil(len(T) / 3)):
-                if i == ceil(len(T) / 3) - 1:
-                    sum_xt = 0
-                    for j in range(len(T) % 3):
-                        sum_xt += x_st[s, k + j]
-                    self.optimizer.add_constraint(sum_xt <= 1)
-                else:
-                    self.optimizer.add_constraint(
-                        (x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2]) <= 1
-                    )
-                k += 3
+        # for s in range(len(S)):
+        #     k = 0
+        #     for i in range(ceil(len(T) / 3)):
+        #         if i == ceil(len(T) / 3) - 1:
+        #             sum_xt = 0
+        #             for j in range(len(T) % 3):
+        #                 sum_xt += x_st[s, k + j]
+        #             self.optimizer.add_constraint(sum_xt <= 1)
+        #         else:
+        #             self.optimizer.add_constraint(
+        #                 (x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2]) <= 1
+        #             )
+        #         k += 3
 
     def add_situational_constraints(
         self, E, R, x, x_etr, room_availability, prof_availability
@@ -293,7 +293,9 @@ class CplexSolver:
             print("FAIL (107 TimeLimit): OBJ VALUE:", objective_value)
             status = "timeout"
 
-        elif self.optimizer.solve_details.status_code == 103:  # infeasible problem
+        elif (self.optimizer.solve_details.status_code == 103) or (
+            self.optimizer.solve_details.status_code == 108
+        ):  # infeasible problem
             print("processing infeasible")
             df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
             solve_time = self.optimizer.solve_details.time
