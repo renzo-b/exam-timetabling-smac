@@ -1,4 +1,5 @@
 import os
+import time
 from math import ceil, floor
 
 import numpy as np
@@ -243,7 +244,12 @@ class CplexSolver:
             log_output = True
         else:
             log_output = False
+
+        start_time = time.time()
         sol = self.optimizer.solve(log_output=log_output, clean_before_solve=True)
+        end_time = time.time()
+
+        solve_time = end_time - start_time
 
         print(
             self.optimizer.solve_details.status,
@@ -260,7 +266,6 @@ class CplexSolver:
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
             )
-            solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.objective_value
             print("SUC (101): SOLVE TIME:", solve_time)
             print("SUC (101): OBJ VALUE:", objective_value)
@@ -273,7 +278,6 @@ class CplexSolver:
             df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
             )
-            solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
             print("SUC (102): SOLVE TIME:", solve_time)
             print("SUC (102): OBJ VALUE:", objective_value)
@@ -287,7 +291,6 @@ class CplexSolver:
                 ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
             )
             df_schedule.insert(loc=0, column="Failed (Timeout)", value="NaN")
-            solve_time = self.optimizer.solve_details.time
             objective_value = self.optimizer.solve_details.best_bound
             print("FAIL (107 TimeLimit): SOLVE TIME:", solve_time)
             print("FAIL (107 TimeLimit): OBJ VALUE:", objective_value)
@@ -298,14 +301,13 @@ class CplexSolver:
         ):  # infeasible problem
             print("processing infeasible")
             df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
-            solve_time = self.optimizer.solve_details.time
             objective_value = 0
             print("FAIL (103 infeasible): SOLVE TIME:", solve_time)
             print("FAIL (103 infeasible): OBJ VALUE:", objective_value)
             status = "infeasible"
 
         else:
-            solve_time = 1e6
+            solve_time = 1e4
             objective_value = 1e6
             df_schedule = pd.DataFrame({"F": ["Failed (unknown)"]})
             print("FAIL UKNOWN")
@@ -330,6 +332,9 @@ class CplexSolver:
                 pass
 
             with open(save_filepath, "a") as f:
+                print(f"rt = {solve_time} \n")
+                print(f"obj = {objective_value} \n")
+                print(f"status = {status} \n")
                 f.write(f"rt = {solve_time} \n")
                 f.write(f"obj = {objective_value} \n")
                 f.write(f"status = {status} \n")
