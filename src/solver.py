@@ -152,21 +152,6 @@ class CplexSolver:
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-        # C7 only one exam per day for each student
-        # for s in range(len(S)):
-        #     k = 0
-        #     for i in range(ceil(len(T) / 3)):
-        #         if i == ceil(len(T) / 3) - 1:
-        #             sum_xt = 0
-        #             for j in range(len(T) % 3):
-        #                 sum_xt += x_st[s, k + j]
-        #             self.optimizer.add_constraint(sum_xt <= 1)
-        #         else:
-        #             self.optimizer.add_constraint(
-        #                 (x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2]) <= 1
-        #             )
-        #         k += 3
-
     def add_situational_constraints(
         self, E, R, x, x_etr, room_availability, prof_availability
     ):
@@ -183,7 +168,7 @@ class CplexSolver:
             self.optimizer.add_constraint(x[e, t] == 0)
             self.optimizer.add_constraints((x_etr[e, t, r] == 0) for r in range(len(R)))
 
-    def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv):
+    def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st):
         up = (
             sum(1 * sumHe_s[e] * ratio_of_Inv for e in range(len(E)))
             for r in range(len(R))
@@ -202,7 +187,19 @@ class CplexSolver:
             )
             self.optimizer.add_constraint(ceil_obj[r] >= sum_sum[r])
 
-        obj_fun = sum(ceil_obj[r] for r in range(len(R)))
+        # C7 only one exam per day for each student
+        sum_xt = 0
+        for s in range(len(S)):
+            k = 0
+            for i in range(ceil(len(T) / 3)):
+                if i == ceil(len(T) / 3) - 1:
+                    for j in range(len(T) % 3):
+                        sum_xt += x_st[s, k + j]
+                else:
+                    sum_xt += x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2]
+                k += 3
+
+        obj_fun = sum(ceil_obj[r] for r in range(len(R))) + sum_xt
 
         # Optimizer Info
         self.optimizer.set_objective("min", obj_fun)
@@ -236,7 +233,7 @@ class CplexSolver:
         )
 
         # Objective Function
-        self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv)
+        self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st)
 
         # Solve
         if verbose:

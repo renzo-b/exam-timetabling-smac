@@ -65,11 +65,11 @@ student_per_semester = {
 SEMESTERS = [
     "a_20189",
     "a_20191",
-    "a_20195",
+    # "a_20195",
     "a_20199",
     "a_20201",
-    "a_20205",
-    "a_20215",
+    # "a_20205",
+    # "a_20215",
 ]
 TEST_SEMESTERS = [
     "a_20219",
@@ -83,14 +83,15 @@ NUMBER_INSTANCES = 1
 # semester = "a_20195"
 INSTANCE_SPACE = [
     {
-        "num_students": int(
-            np.linspace(
-                # merged_semester[semester],
-                student_per_semester[semester][0],
-                student_per_semester[semester][1],
-                NUMBER_INSTANCES,
-            )[i]
-        ),
+        "num_students":
+        # int(
+        # np.linspace(
+        # merged_semester[semester],
+        # student_per_semester[semester][0],
+        student_per_semester[semester][1],
+        # NUMBER_INSTANCES,
+        # )[i]
+        # ),
         "every_n_room": 1,
         "np_seed": i,
         "room_avail_p": (np.linspace(99, 95, NUMBER_INSTANCES) / 100)[i],
