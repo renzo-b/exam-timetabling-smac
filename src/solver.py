@@ -109,7 +109,11 @@ class CplexSolver:
             len(S), len(T), name="x_st"
         )  # whether student s in sitting in an exam at time T
 
-        return x, y, x_etr, x_st
+        penalty_x_st = self.optimizer.integer_var_matrix(
+            len(S), len(T), lb=0, name="x_st_penalty"
+        )  # whether student s in sitting in an exam at time T
+
+        return x, y, x_etr, x_st, penalty_x_st
 
     def add_constraints(self, E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st):
         print("Loading constraints")
@@ -168,7 +172,9 @@ class CplexSolver:
             self.optimizer.add_constraint(x[e, t] == 0)
             self.optimizer.add_constraints((x_etr[e, t, r] == 0) for r in range(len(R)))
 
-    def add_objective_function(self, y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st):
+    def add_objective_function(
+        self, y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st, penalty_x_st
+    ):
         up = (
             sum(1 * sumHe_s[e] * ratio_of_Inv for e in range(len(E)))
             for r in range(len(R))
@@ -188,20 +194,26 @@ class CplexSolver:
             self.optimizer.add_constraint(ceil_obj[r] >= sum_sum[r])
 
         # C7 only one exam per day for each student
-        sum_penalty = 0
-        for s in range(len(S)):
+        for s in tqdm(range(len(S))):
             k = 0
             for i in range(ceil(len(T) / 3)):
                 if i == ceil(len(T) / 3) - 1:
+                    sum_xt = 0
                     for j in range(len(T) % 3):
-                        if x_st[s, k + j] >= 2:
-                            sum_penalty += 1
-                else:
-                    if x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2] >= 2:
-                        sum_penalty += 1
+                        sum_xt += x_st[s, k + j]
+                    self.optimizer.add_constraint(sum_xt - 1 <= penalty_x_st[s, i])
+                # else:
+                #     self.optimizer.add_constraint(
+                #         x_st[s, k] + x_st[s, k + 1] + x_st[s, k + 2] - 1
+                #         <= penalty_x_st[s, i]
+                #     )
                 k += 3
 
-        obj_fun = sum(ceil_obj[r] for r in range(len(R))) + sum_penalty
+        print("loading obj")
+        obj_fun = sum(ceil_obj[r] for r in range(len(R))) + sum(
+            penalty_x_st[s, t] for s in tqdm(range(len(S))) for t in range(len(T))
+        )
+        print("loaded obj")
 
         # Optimizer Info
         self.optimizer.set_objective("min", obj_fun)
@@ -224,7 +236,7 @@ class CplexSolver:
         prof_availability = problem_instance.prof_availability
 
         # Variables
-        x, y, x_etr, x_st = self.add_variables(E, T, R, S)
+        x, y, x_etr, x_st, penalty_x_st = self.add_variables(E, T, R, S)
 
         # Constraints
         self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st)
@@ -235,7 +247,9 @@ class CplexSolver:
         )
 
         # Objective Function
-        self.add_objective_function(y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st)
+        self.add_objective_function(
+            y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st, penalty_x_st
+        )
 
         # Solve
         if verbose:
