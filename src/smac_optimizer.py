@@ -13,8 +13,8 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "test_single_inst_1"
-CPLEX_TIME_LIMIT = 300  # seconds
+SMAC_RUN_NAME = "test_new_obj_fun_2"
+CPLEX_TIME_LIMIT = 600  # seconds
 MIP_GAP = 0.05  # 1 %
 random_seed = 10
 
