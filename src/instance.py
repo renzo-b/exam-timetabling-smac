@@ -340,6 +340,8 @@ class ET_Instance:
         self.prof_availability = prof_availability
         self.semester_date = semester_date
 
+        self.instance_code = f"{len(exam_set)}_{len(student_set)}_{len(datetime_slot_set)}_{len(room_set)}_{courses_enrollments_set.shape}_{semester_date}"
+
         print("generated a new IT instance")
         self.print_instance_info()
 

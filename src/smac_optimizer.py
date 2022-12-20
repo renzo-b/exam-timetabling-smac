@@ -13,7 +13,7 @@ from smac.initial_design.default_design import DefaultInitialDesign
 from instance import INSTANCE_SPACE, SEMESTERS, get_ET_instance
 from solver import CplexSolver
 
-SMAC_RUN_NAME = "test_new_obj_fun_2"
+SMAC_RUN_NAME = "test_new_obj_pickled_3"
 CPLEX_TIME_LIMIT = 600  # seconds
 MIP_GAP = 0.05  # 1 %
 random_seed = 10
@@ -42,17 +42,22 @@ def minimize_mip(config, seed: int = 1):
 
     for instance_num in range(len(INSTANCE_SPACE)):
         mip_solver = CplexSolver()
-        mip_solver.initialize_solver({**config, **mip_static_config})
+        # mip_solver.initialize_solver(
+        #     configuration_parameters={**config, **mip_static_config}
+        # )
         save_filepath = f"{path}/instance_{instance_num}.txt"
         instance = get_ET_instance(instance_num)
         print(
             f"you're about to solve for instance num: {instance_num} out of {len(INSTANCE_SPACE)}"
         )
         _, objective_value, df_schedule = mip_solver.solve(
-            instance, save_filepath=save_filepath, verbose=True
+            problem_instance=instance,
+            configuration_parameters={**config, **mip_static_config},
+            save_filepath=save_filepath,
+            verbose=True,
         )
         objective_value_list.append(objective_value)
-        df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
+        # df_schedule.to_csv(f"{path}/DF_Schedual_{instance_num}.csv")
 
     return np.mean(objective_value_list)
 

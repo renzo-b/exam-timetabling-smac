@@ -1,4 +1,5 @@
 import os
+import pickle
 import time
 from math import ceil, floor
 
@@ -12,7 +13,7 @@ from tqdm import tqdm
 
 class CplexSolver:
     def __init__(self):
-        self.optimizer: Model
+        self.optimizer = Model(name="solver")
 
     def initialize_solver(self, configuration_parameters):
         """
@@ -54,7 +55,6 @@ class CplexSolver:
             "mip_variable_selection_strategy"
         ]
 
-        self.optimizer = Model(name="solver")
         self.optimizer.parameters.timelimit = timelimit
         self.optimizer.parameters.mip.tolerances.mipgap = mipgap
         self.optimizer.parameters.randomseed = random_seed
@@ -156,22 +156,6 @@ class CplexSolver:
                 if type(cond) != int:
                     self.optimizer.add_constraint(cond <= 1)
 
-    def add_situational_constraints(
-        self, E, R, x, x_etr, room_availability, prof_availability
-    ):
-        for idx in np.argwhere(room_availability == 1):
-            r = idx[0]
-            t = idx[1]
-
-            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for e in range(len(E)))
-
-        for idx in np.argwhere(prof_availability == 1):
-            e = idx[0]
-            t = idx[1]
-
-            self.optimizer.add_constraint(x[e, t] == 0)
-            self.optimizer.add_constraints((x_etr[e, t, r] == 0) for r in range(len(R)))
-
     def add_objective_function(
         self, y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st, penalty_x_st
     ):
@@ -219,7 +203,13 @@ class CplexSolver:
         self.optimizer.set_objective("min", obj_fun)
         self.optimizer.print_information()
 
-    def solve(self, problem_instance, save_filepath: str = "", verbose=False):
+    def solve(
+        self,
+        problem_instance,
+        configuration_parameters,
+        save_filepath: str = "",
+        verbose=False,
+    ):
         """
         Solves a problem instance
         """
@@ -234,22 +224,35 @@ class CplexSolver:
         sumHe_s = np.sum(He_s, axis=1)
         room_availability = problem_instance.room_availability
         prof_availability = problem_instance.prof_availability
+        instance_code = problem_instance.instance_code
 
-        # Variables
-        x, y, x_etr, x_st, penalty_x_st = self.add_variables(E, T, R, S)
+        try:
+            # Variables
+            with open(f"{instance_code}.pkl", "rb") as f:
+                self.optimizer = pickle.load(f)
 
-        # Constraints
-        self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st)
+            self.initialize_solver(configuration_parameters)
 
-        # Optional Constraints
-        self.add_situational_constraints(
-            E, R, x, x_etr, room_availability, prof_availability
-        )
+        except:
+            self.initialize_solver(configuration_parameters)
+            # Variables
+            x, y, x_etr, x_st, penalty_x_st = self.add_variables(E, T, R, S)
 
-        # Objective Function
-        self.add_objective_function(
-            y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st, penalty_x_st
-        )
+            # Constraints
+            self.add_constraints(E, S, T, R, Cp, He_s, sumHe_s, x, y, x_etr, x_st)
+
+            # Optional Constraints
+            # self.add_situational_constraints(
+            #     E, R, x, x_etr, room_availability, prof_availability
+            # )
+
+            # Objective Function
+            self.add_objective_function(
+                y, E, R, sumHe_s, ratio_of_Inv, S, T, x_st, penalty_x_st
+            )
+
+            with open(f"{instance_code}.pkl", "wb") as f:
+                pickle.dump(self.optimizer, f)
 
         # Solve
         if verbose:
@@ -274,11 +277,11 @@ class CplexSolver:
 
         if self.optimizer.solve_details.status_code == 101:  # success
             print("processing success")
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
-            enrolment_df = create_enrolment_df(He_s, S, E)
-            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
-                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
-            )
+            # schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
+            # enrolment_df = create_enrolment_df(He_s, S, E)
+            # df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+            # ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            # )
             objective_value = self.optimizer.objective_value
             print("SUC (101): SOLVE TIME:", solve_time)
             print("SUC (101): OBJ VALUE:", objective_value)
@@ -286,11 +289,11 @@ class CplexSolver:
 
         elif self.optimizer.solve_details.status_code == 102:  # success
             print("processing success w/ tolerance")
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
-            enrolment_df = create_enrolment_df(He_s, S, E)
-            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
-                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
-            )
+            # schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
+            # enrolment_df = create_enrolment_df(He_s, S, E)
+            # df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+            #     ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            # )
             objective_value = self.optimizer.solve_details.best_bound
             print("SUC (102): SOLVE TIME:", solve_time)
             print("SUC (102): OBJ VALUE:", objective_value)
@@ -298,12 +301,12 @@ class CplexSolver:
 
         elif self.optimizer.solve_details.status_code == 107:  # time limit
             print("processing timelimit")
-            schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
-            enrolment_df = create_enrolment_df(He_s, S, E)
-            df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
-                ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
-            )
-            df_schedule.insert(loc=0, column="Failed (Timeout)", value="NaN")
+            # schedule, df_x, df_y = self.process_solution(sol, x, y, E, T, R, Cp)
+            # enrolment_df = create_enrolment_df(He_s, S, E)
+            # df_schedule = (schedule.merge(enrolment_df, on="EXAM", how="left")).drop(
+            #     ["exam_x", "value_x", "exam_y", "room", "value_y"], axis=1
+            # )
+            # df_schedule.insert(loc=0, column="Failed (Timeout)", value="NaN")
             objective_value = self.optimizer.solve_details.best_bound
             print("FAIL (107 TimeLimit): SOLVE TIME:", solve_time)
             print("FAIL (107 TimeLimit): OBJ VALUE:", objective_value)
@@ -313,7 +316,7 @@ class CplexSolver:
             self.optimizer.solve_details.status_code == 108
         ):  # infeasible problem
             print("processing infeasible")
-            df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
+            # df_schedule = pd.DataFrame({"F": ["Failed (Infeasible)"]})
             objective_value = 0
             print("FAIL (103 infeasible): SOLVE TIME:", solve_time)
             print("FAIL (103 infeasible): OBJ VALUE:", objective_value)
@@ -322,7 +325,7 @@ class CplexSolver:
         else:
             solve_time = 1e4
             objective_value = 1e6
-            df_schedule = pd.DataFrame({"F": ["Failed (unknown)"]})
+            # df_schedule = pd.DataFrame({"F": ["Failed (unknown)"]})
             print("FAIL UKNOWN")
             status = "unknown"
 
@@ -354,7 +357,7 @@ class CplexSolver:
 
         self.optimizer.clear()
 
-        return solve_time, objective_value, df_schedule
+        return solve_time, objective_value, None  # df_schedule
 
     def process_solution(self, sol, x, y, E, T, R, Cp):
         """
